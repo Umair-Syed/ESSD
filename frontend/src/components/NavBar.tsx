@@ -2,6 +2,8 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from 'next/navigation'
+import { Button } from "flowbite-react";
+import AddServerModal from "./AddServerModal";
 
 
 export default function NavBar() {
@@ -9,6 +11,8 @@ export default function NavBar() {
     const [selectedItem, setSelectedItem] = useState("All servers");
     const dropdownRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname()
+    const [showModal, setShowModal] = useState(false);
+
 
     const dropdownItems = [
         "All servers",
@@ -51,8 +55,7 @@ export default function NavBar() {
     ];
 
     const linkClass = (href: string) =>
-        `py-4 px-2 text-gray-500  hover:text-primary transition duration-300 ${
-            pathname === href ? "text-grey-800 font-extrabold" : "font-semibold"
+        `py-4 px-2 text-gray-500  hover:text-primary transition duration-300 ${pathname === href ? "text-grey-800 font-extrabold" : "font-semibold"
         }`;
 
     return (
@@ -67,15 +70,24 @@ export default function NavBar() {
                         {/* Primary Navbar items */}
                         <div className="hidden md:flex items-center space-x-4 ml-4">
                             {navLinks.map((link) => (
-                            <a key={link.href} href={link.href} className={linkClass(link.href)}>
-                                {link.text}
-                            </a>
+                                <a key={link.href} href={link.href} className={linkClass(link.href)}>
+                                    {link.text}
+                                </a>
                             ))}
                         </div>
                     </div>
 
-                    {/* Filter and search for Home page */}
+                    {/* Add server button, Filter and search for Home page only */}
                     {pathname === "/" && <div className="hidden md:flex items-center space-x-3 relative">
+                        {/* Add server */}
+                        <Button
+                            onClick={() => setShowModal(true)}
+                            color="dark"
+                        >
+                            Add server
+                        </Button>
+
+                        {/* Filter */}
                         <div className="relative" ref={dropdownRef}>
                             <button
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -91,20 +103,29 @@ export default function NavBar() {
                             {dropdownOpen && (
                                 <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 mt-2">
                                     <ul className="py-2 text-sm text-gray-700">
-                                    {dropdownItems.map((item) => (
-                                    <li key={item}>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100" onClick={() => handleItemClick(item)}>
-                                            {item}
-                                        </a>
-                                    </li>
-                                ))}
+                                        {dropdownItems.map((item) => (
+                                            <li key={item}>
+                                                <a href="#" className="block px-4 py-2 hover:bg-gray-100" onClick={() => handleItemClick(item)}>
+                                                    {item}
+                                                </a>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
                             )}
                         </div>
+                        
+                        {/* Search */}
                         <input type="search" placeholder="Search" className="py-2 px-4 bg-white border border-gray-300 rounded-md" />
-                    </div>}         
+                    </div>}
                 </div>
+                {/* Modal to add server */}
+                {showModal && (
+                    <AddServerModal
+                        showModal={showModal}
+                        setShowModal={setShowModal}
+                    />
+                )}
             </div>
         </nav>
     );
