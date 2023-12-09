@@ -94,15 +94,20 @@ function parseServiceData(responseData: ServerResponseData): ServicesData {
             for (const nodeId in serviceNodes) {
                 try {
                     const nodeData = JSON.parse(serviceNodes[nodeId]);
+                    let status: ('up' | 'down')  = 'down';
+                    let nodeName = serviceName;
+            
                     if (nodeData.payload) {
+                        nodeName = nodeData.payload.hostname;
+                        status = "up";
+                    }
+        
+                    const nodeExists = nodes.some(node => node.nodeName === nodeName);
+            
+                    if (!nodeExists) {
                         nodes.push({
-                            nodeName: nodeData.payload.hostname,
-                            status: "up"
-                        });
-                    } else {
-                        nodes.push({
-                            nodeName: serviceName,
-                            status: "down"
+                            nodeName: nodeName,
+                            status: status
                         });
                     }
                 } catch (e) {
