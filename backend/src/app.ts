@@ -17,8 +17,31 @@ app.use(cors({
 
 app.use("/servers-meta", serverMetaRoutes);
 
+
+import axios from 'axios';
 app.get("/", (req, res) => {
-    res.send("Hello World!");
+    // testing ssh connection
+    // executeCommandOnSSH('df -h', 'thor.vcraeng.com', 'root', '1ntell1dot')
+    //     .then(output => res.send(`Command output: ${output}`))
+    //     .catch(err => console.error('Error:', err));
+    
+    const url = `https://thor.vcraeng.com:2443/configuration-service-admin/cluster/nodes?namespace=/serviceRegistry&_=1700746112434`;
+    const username = 'admin';
+    const password = '1ntell1dot';
+    
+    const base64Credentials = Buffer.from(username + ':' + password).toString('base64');
+
+    // // Setting the Authorization header manually
+    const headers = {
+        'Authorization': 'Basic ' + base64Credentials
+    };
+    
+    axios.get(url, { headers: headers })
+    .then(response => res.send(`Data: ${JSON.stringify(response.data)}`))
+    .catch(error => console.error('Error:', error));
+
+
+    // res.send("Hello World!");
 })
 
 export default app;
