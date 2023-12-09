@@ -13,7 +13,7 @@ export default function AddServerModal(props: IAddServerModalProps) {
     const [isCluster, setIsCluster] = useState(false);
     const [nodeHostnames, setNodeHostnames] = useState(['']);
     const [username2443, setUsername2443] = useState('admin');
-    const [password2443, setPassword2443] = useState('password');
+    const [password2443, setPassword2443] = useState('1ntell1dot');
     const [formErrors, setFormErrors] = useState<string[]>([]);
 
     // To handle adding more node hostname fields

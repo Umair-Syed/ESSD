@@ -4,20 +4,23 @@ import cors from "cors";
 import env from "./env";
 import morgan from "morgan";
 import serverMetaRoutes from "./routes/servers-meta";
+import startCronJobs from './services/cronJobs';
 
 const app = express();
 
 app.use(morgan("dev"));
-
 app.use(express.json());
-
 app.use(cors({
     origin: env.WEBSITE_URL,
 }));
 
+startCronJobs();
+
+// Routes
 app.use("/servers-meta", serverMetaRoutes);
 
 
+// Testing`
 import axios from 'axios';
 app.get("/", (req, res) => {
     // testing ssh connection
