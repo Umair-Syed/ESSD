@@ -16,6 +16,7 @@
     "@types/express": "^4.17.21",
     "@types/http-errors": "^2.0.4",
     "@types/morgan": "^1.9.9",
+    "@types/mssql": "^9.1.4",
     "@types/node-cron": "^3.0.11",
     "@types/ssh2": "^1.11.18",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
@@ -35,6 +36,7 @@
     "http-errors": "^2.0.0",
     "mongoose": "^8.0.1",
     "morgan": "^1.10.0",
+    "mssql": "^10.0.1",
     "node-cron": "^3.0.3",
     "ssh2": "^1.14.0"
   }

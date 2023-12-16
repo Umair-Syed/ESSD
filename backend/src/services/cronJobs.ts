@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import ServersMetaModel from '../models/server-meta';
+import { ICreateServerMetaBody } from './tasks/databaseTask';
 import updateServicesDataTask from './tasks/servicesTask';
 import updateDatabaseDataTask from './tasks/databaseTask';
 import updateDiskUsageDataTask from './tasks/diskUsageTask';
@@ -17,7 +18,7 @@ export default function startCronJobs() {
         const servers = await ServersMetaModel.find();
         for (const server of servers) {
           await updateServicesDataTask(server);
-          await updateDatabaseDataTask(server);
+          await updateDatabaseDataTask(server as ICreateServerMetaBody);
         }
       } catch (error) {
         console.error(`Failed to execute update task with time interval: ${timeInterval}, Error: ${error} `);

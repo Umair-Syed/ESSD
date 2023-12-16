@@ -19,18 +19,39 @@ type ICreateServerMetaBody = {
     nodesHostnames: string[],
     userName2443: string,
     password2443: string,
+    showDatabaseInfo: boolean,
+    databaseServerHost: string,
+    databaseUsername: string,
+    databasePassword: string,
+    selectedDatabases: string[],
 }
 
 export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMetaBody, unknown> = async (req, res) => {
-    const {hostname, isCluster, nodesHostnames, userName2443, password2443} = req.body;
+    const {
+        hostname, 
+        isCluster, 
+        nodesHostnames, 
+        userName2443, 
+        password2443,
+        showDatabaseInfo,
+        databaseServerHost,
+        databaseUsername,
+        databasePassword,
+        selectedDatabases,
+    } = req.body;
 
     try {
         const newServerMeta = await ServerMetaModel.create({
             hostname,
             isCluster,
-            nodesHostnames, // check if isCluster
+            nodesHostnames, // will be empty if isCluster is false
             userName2443,
             password2443,
+            showDatabaseInfo,
+            databaseServerHost, // will be empty if showDatabaseInfo is false
+            databaseUsername, // will be empty if showDatabaseInfo is false
+            databasePassword, // will be empty if showDatabaseInfo is false
+            selectedDatabases, // will be empty if showDatabaseInfo is false
         });
 
         res.status(201).json(newServerMeta);

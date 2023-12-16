@@ -28,14 +28,17 @@ const memoryPressureForNode = new Schema({
     },
 },{ _id: false });
 
+const databaseStatus = new Schema({
+    databaseName: String,
+    status: String
+},{ _id: false });
+
 const serversDataSchema = new Schema({
     hostname: { type: String, required: true },
     services: [serviceStatusSchema],
     diskUsages: [diskUsageForNode], // will have only one element for non-cluster servers
     memoryPressure: [memoryPressureForNode], // will have only one element for non-cluster servers
-    databaseConnection: {
-        activeConnections: Number
-    }
+    databaseStatus: [databaseStatus],
 }, { timestamps: true });
 
 
