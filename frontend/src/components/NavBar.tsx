@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from 'next/navigation'
 import { Button } from "flowbite-react";
 import AddServerModal from "./AddServerModal";
+import EnterFullScreenIcon from '@/assets/full-screen.svg';
+import ExitFullScreenIcon from '@/assets/exit-full-screen.svg';
+
 
 
 export default function NavBar() {
@@ -12,6 +15,7 @@ export default function NavBar() {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname()
     const [showModal, setShowModal] = useState(false);
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
 
     const dropdownItems = [
@@ -47,28 +51,63 @@ export default function NavBar() {
         setDropdownOpen(false);
     };
 
+    const handleFullScreenToggle = () => {
+        const navbar = document.querySelector('.navbar');
+    
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            setIsFullScreen(true);
+            if (navbar){
+                navbar.classList.add('navbar-hidden');
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+                setIsFullScreen(false);
+                if (navbar){
+                    navbar.classList.remove('navbar-hidden');
+                }
+            }
+        }
+    };
+    
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const navbar = document.querySelector('.navbar');
+            if (navbar && isFullScreen && e.clientY < 100) { // 100px from the top
+                navbar.classList.remove('navbar-hidden');
+            } else if (navbar && isFullScreen && e.clientY > 100 && !dropdownOpen) {
+                navbar.classList.add('navbar-hidden');
+            }
+        };
+    
+        window.addEventListener('mousemove', handleMouseMove);
+    
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, [isFullScreen, dropdownOpen]);
+    
 
     const navLinks = [
         { href: "/", text: "Home" },
         { href: "/present", text: "Present" },
-        { href: "/builds", text: "Builds" },
     ];
 
     const linkClass = (href: string) =>
-        `py-4 px-2 text-gray-500  hover:text-primary transition duration-300 ${pathname === href ? "text-grey-800 font-extrabold" : "font-semibold"
-        }`;
+        `py-4 px-2 text-gray-500 text-xl hover:text-primary transition duration-300 ${pathname === href ? "text-grey-800 font-extrabold" : "font-semibold"}`;
 
     return (
-        <nav className="bg-white shadow-lg">
+        <nav className="bg-white shadow-md navbar">
             <div className="container mx-auto px-2 sm:px-4 lg:px-8">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center">
                         {/* Logo */}
-                        <a href="/" className="py-4">
-                            <Image src="/logo.png" alt="Logo" width={50} height={50} />
+                        <a href="/" className="py-4 mr-4">
+                            <Image src="/logo.png" alt="Logo" width={60} height={60} />
                         </a>
                         {/* Primary Navbar items */}
-                        <div className="hidden md:flex items-center space-x-4 ml-4">
+                        <div className="hidden md:flex items-center space-x-4 ml-4 pt-1">
                             {navLinks.map((link) => (
                                 <a key={link.href} href={link.href} className={linkClass(link.href)}>
                                     {link.text}
@@ -78,14 +117,14 @@ export default function NavBar() {
                     </div>
 
                     {/* Add server button, Filter and search for Home page only */}
-                    {pathname === "/" && <div className="hidden md:flex items-center space-x-3 relative">
+                    <div className="hidden md:flex items-center space-x-3 relative">
                         {/* Add server */}
-                        <Button
+                        {pathname === "/" && <Button
                             onClick={() => setShowModal(true)}
                             color="dark"
                         >
                             Add server
-                        </Button>
+                        </Button>}
 
                         {/* Filter */}
                         <div className="relative" ref={dropdownRef}>
@@ -114,10 +153,21 @@ export default function NavBar() {
                                 </div>
                             )}
                         </div>
-                        
+                        {/* Full Screen Toggle for '/present' path */}
+                        {pathname === "/present" && (
+                            <button
+                                onClick={handleFullScreenToggle}
+                            >
+                                {isFullScreen ? (
+                                    <Image src={ExitFullScreenIcon} alt="Exit Full Screen" className="ml-2 w-6 h-6" />
+                                ) : (
+                                    <Image src={EnterFullScreenIcon} alt="Enter Full Screen" className="ml-2 w-8 h-8" />
+                                )}
+                            </button>
+                        )}
                         {/* Search */}
-                        <input type="search" placeholder="Search" className="py-2 px-4 bg-white border border-gray-300 rounded-md" />
-                    </div>}
+                        {pathname === "/" && <input type="search" placeholder="Search" className="py-2 px-4 bg-white border border-gray-300 rounded-md" />}
+                    </div>
                 </div>
                 {/* Modal to add server */}
                 {showModal && (
