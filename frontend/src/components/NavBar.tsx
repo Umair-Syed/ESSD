@@ -11,6 +11,7 @@ import { addFilter as addFilterApi } from '@/network/api/miscelleneousDataApis';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getFilters, deleteFilter } from "@/network/api/miscelleneousDataApis";
+import WarningModal from "./WarningModal";
 
 
 export default function NavBar() {
@@ -18,10 +19,12 @@ export default function NavBar() {
     const [selectedFilter, setSelectedFilter] = useState("All servers");
     const dropdownRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname()
-    const [showModal, setShowModal] = useState(false);
+    const [showAddServerModal, setShowAddServerModal] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [newFilter, setNewFilter] = useState("");
-    const [dropdownFilterItems, setDropdowFilterItems] = useState<string[]>(["All servers"]);
+    const [filters, setFilters] = useState<string[]>(["All servers"]);
+    const [showFilterDeleteModal, setShowFilterDeleteModal] = useState(false);
+    const [filterToDelete, setFilterToDelete] = useState('');
 
     const handleClickOutside = (event: Event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -34,10 +37,10 @@ export default function NavBar() {
         const fetchFilters = async () => {
             try {
                 const filtersData = await getFilters();
-                const filterItems = filtersData.filters.map(filter => filter.filter);
+                const fetchedFilterItems = filtersData.filters.map(filter => filter.filter);
                 // All servers filter is always present. When user choose All filter, send GET request without filter.
-                const updatedDropdownItems = [...dropdownFilterItems, ...filterItems];
-                setDropdowFilterItems(updatedDropdownItems);
+                const updatedDropdownItems = [...filters, ...fetchedFilterItems];
+                setFilters(updatedDropdownItems);
             } catch (error) {
                 console.error("Error fetching filters:", error);
             }
@@ -115,13 +118,12 @@ export default function NavBar() {
     const handleFilterRemove = async (filter: string) => {
         try {
             const response = await deleteFilter(filter);
-            console.log(`Filter add: Response${JSON.stringify(response)}`);
             toast.warning(`Filter ${filter} deleted.`, {
                 position: "bottom-left",
                 autoClose: 3000,
             });
             const filterItems = response.filters.map(filter => filter.filter);
-            setDropdowFilterItems(filterItems);
+            setFilters(filterItems);
         } catch (error) {
             console.error("Error adding filter:", error);
             alert(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`);
@@ -131,23 +133,23 @@ export default function NavBar() {
     };
 
     const handleFilterAdd = async () => {
-        if (newFilter.length > 0 && !dropdownFilterItems.includes(newFilter)) {
+        if (newFilter.length > 0 && !filters.includes(newFilter)) {
             try {
                 await addFilterApi({ filter: newFilter });
                 toast.success(`Filter ${newFilter} added successfully`, {
                     position: "bottom-left",
                     autoClose: 3000,
                 });
-                const updatedDropdownItems = [...dropdownFilterItems];
+                const updatedDropdownItems = [...filters];
                 updatedDropdownItems.push(newFilter);
-                setDropdowFilterItems(updatedDropdownItems);
+                setFilters(updatedDropdownItems);
             } catch (error) {
                 console.error("Error adding filter:", error);
                 alert(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`);
                 // Handle the error appropriately - maybe show a message to the user
             }
             setNewFilter("");
-        } else if (dropdownFilterItems.includes(newFilter)) {
+        } else if (filters.includes(newFilter)) {
             toast.error(`Filter ${newFilter} already exists`, {
                 position: "bottom-left",
                 autoClose: 3000,
@@ -178,7 +180,7 @@ export default function NavBar() {
                     <div className="hidden md:flex items-center space-x-3 relative">
                         {/* Add server */}
                         {pathname === "/" && <Button
-                            onClick={() => setShowModal(true)}
+                            onClick={() => setShowAddServerModal(true)}
                             color="dark"
                         >
                             Add server
@@ -201,14 +203,17 @@ export default function NavBar() {
                                 <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-68 mt-2">
                                     <div className="max-h-80 overflow-y-auto">
                                         <ul className="py-2 text-sm text-gray-700o">
-                                            {dropdownFilterItems.map((item) => (
+                                            {filters.map((item) => (
                                                 <li key={item}>
                                                     <div className="flex justify-between hover:bg-gray-100">
                                                         <button className="px-4 py-2 " onClick={() => handleFilterClick(item)}>
                                                             {item}
                                                         </button>
                                                         {item !== "All servers" &&
-                                                            <button className="pr-2 py-2" onClick={() => handleFilterRemove(item)}>
+                                                            <button className="pr-2 py-2" onClick={() => {
+                                                                setFilterToDelete(item);
+                                                                setShowFilterDeleteModal(true);
+                                                            }}>
                                                                 <IoIosRemoveCircleOutline className="text-gray-600 h-5 w-5 hover:text-red-500" />
                                                             </button>
                                                         }
@@ -253,10 +258,10 @@ export default function NavBar() {
                     </div>
                 </div>
                 {/* Modal to add server */}
-                {showModal && (
+                {showAddServerModal && (
                     <AddServerModal
-                        showModal={showModal}
-                        setShowModal={setShowModal}
+                        showModal={showAddServerModal}
+                        setShowModal={setShowAddServerModal}
                     />
                 )}
             </div>
@@ -272,6 +277,12 @@ export default function NavBar() {
                 pauseOnHover
                 theme="colored"
             />
+            {showFilterDeleteModal && <WarningModal
+                openModal={showFilterDeleteModal}
+                setOpenModal={setShowFilterDeleteModal}
+                description={`Are you sure you want to delete ${filterToDelete} filter?`}
+                onConfirm={() => handleFilterRemove(filterToDelete)}
+            />}
         </nav>
     );
 }
