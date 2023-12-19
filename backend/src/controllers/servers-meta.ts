@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import ServerMetaModel  from "../models/server-meta";
+import ServerDataModel  from "../models/server-data";
 
 
 export const getServersMeta: RequestHandler = async (req, res) => {
@@ -24,6 +25,7 @@ type ICreateServerMetaBody = {
     databaseUsername: string,
     databasePassword: string,
     selectedDatabases: string[],
+    selectedFilters: string[],
 }
 
 export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMetaBody, unknown> = async (req, res) => {
@@ -38,6 +40,7 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
         databaseUsername,
         databasePassword,
         selectedDatabases,
+        selectedFilters,
     } = req.body;
 
     try {
@@ -52,11 +55,28 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
             databaseUsername, // will be empty if showDatabaseInfo is false
             databasePassword, // will be empty if showDatabaseInfo is false
             selectedDatabases, // will be empty if showDatabaseInfo is false
+            selectedFilters,
         });
+
+        createServerDataWithHostnameAndFilters(hostname, selectedFilters);
 
         res.status(201).json(newServerMeta);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error });
     }
+}
+
+async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[]) {
+    /*
+        Will create a new server data document in serversdatas collection, with the hostname and filters.
+        Rest of the fields will be created later when CRON task will run.
+    */
+    await ServerDataModel.findOneAndUpdate(
+        { hostname: hostname },
+        { 
+            selectedFilters: selectedFilters,
+        },
+        { upsert: true, new: true }
+    );
 }

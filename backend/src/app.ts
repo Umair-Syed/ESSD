@@ -5,6 +5,7 @@ import env from "./env";
 import morgan from "morgan";
 import serverMetaRoutes from "./routes/servers-meta";
 import databaseRoutes from "./routes/databases";
+import miscRoutes from "./routes/miscelleneous-data";
 import startCronJobs from './services/cronJobs';
 
 const app = express();
@@ -21,6 +22,7 @@ startCronJobs();
 // Routes
 app.use("/servers-meta", serverMetaRoutes);
 app.use("/databases", databaseRoutes);
+app.use("/misc", miscRoutes); // miscelleneous routes - eg. Filters
 
 
 // Testing

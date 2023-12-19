@@ -6,27 +6,22 @@ import { Button } from "flowbite-react";
 import AddServerModal from "./AddServerModal";
 import EnterFullScreenIcon from '@/assets/full-screen.svg';
 import ExitFullScreenIcon from '@/assets/exit-full-screen.svg';
-
+import { IoIosAddCircleOutline, IoIosRemoveCircleOutline } from "react-icons/io";
+import { addFilter as addFilterApi } from '@/network/api/miscelleneousDataApis';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getFilters, deleteFilter } from "@/network/api/miscelleneousDataApis";
 
 
 export default function NavBar() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [selectedItem, setSelectedItem] = useState("All servers");
+    const [selectedFilter, setSelectedFilter] = useState("All servers");
     const dropdownRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname()
     const [showModal, setShowModal] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
-
-
-    const dropdownItems = [
-        "All servers",
-        "Up servers",
-        "Down servers",
-        "Edge team servers",
-        "Mobile team servers",
-        "DevOps team servers",
-    ];
-
+    const [newFilter, setNewFilter] = useState("");
+    const [dropdownFilterItems, setDropdowFilterItems] = useState<string[]>(["All servers"]);
 
     const handleClickOutside = (event: Event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -34,6 +29,24 @@ export default function NavBar() {
         }
     };
 
+    // will run only once on component mount
+    useEffect(() => {
+        const fetchFilters = async () => {
+            try {
+                const filtersData = await getFilters();
+                const filterItems = filtersData.filters.map(filter => filter.filter);
+                // All servers filter is always present. When user choose All filter, send GET request without filter.
+                const updatedDropdownItems = [...dropdownFilterItems, ...filterItems];
+                setDropdowFilterItems(updatedDropdownItems);
+            } catch (error) {
+                console.error("Error fetching filters:", error);
+            }
+        };
+
+        fetchFilters();
+    }, []);
+
+    // Handle click outside of dropdown menu
     useEffect(() => {
         if (dropdownOpen) {
             document.addEventListener("mousedown", handleClickOutside);
@@ -46,31 +59,28 @@ export default function NavBar() {
         };
     }, [dropdownOpen]);
 
-    const handleItemClick = (item: string) => {
-        setSelectedItem(item);
-        setDropdownOpen(false);
-    };
 
     const handleFullScreenToggle = () => {
         const navbar = document.querySelector('.navbar');
-    
+
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen();
             setIsFullScreen(true);
-            if (navbar){
+            if (navbar) {
                 navbar.classList.add('navbar-hidden');
             }
         } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
                 setIsFullScreen(false);
-                if (navbar){
+                if (navbar) {
                     navbar.classList.remove('navbar-hidden');
                 }
             }
         }
     };
-    
+
+    // Show navbar when mouse is near the top of the screen
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             const navbar = document.querySelector('.navbar');
@@ -80,22 +90,70 @@ export default function NavBar() {
                 navbar.classList.add('navbar-hidden');
             }
         };
-    
+
         window.addEventListener('mousemove', handleMouseMove);
-    
+
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
         };
     }, [isFullScreen, dropdownOpen]);
-    
+
 
     const navLinks = [
         { href: "/", text: "Home" },
         { href: "/present", text: "Present" },
     ];
 
-    const linkClass = (href: string) =>
+    const primaryNavItems = (href: string) =>
         `py-4 px-2 text-gray-500 text-xl hover:text-primary transition duration-300 ${pathname === href ? "text-grey-800 font-extrabold" : "font-semibold"}`;
+
+    const handleFilterClick = (item: string) => {
+        setSelectedFilter(item);
+        setDropdownOpen(false);
+    };
+
+    const handleFilterRemove = async (filter: string) => {
+        try {
+            const response = await deleteFilter(filter);
+            console.log(`Filter add: Response${JSON.stringify(response)}`);
+            toast.warning(`Filter ${filter} deleted.`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
+            const filterItems = response.filters.map(filter => filter.filter);
+            setDropdowFilterItems(filterItems);
+        } catch (error) {
+            console.error("Error adding filter:", error);
+            alert(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`);
+            // Handle the error appropriately - maybe show a message to the user
+        }
+        setNewFilter("");
+    };
+
+    const handleFilterAdd = async () => {
+        if (newFilter.length > 0 && !dropdownFilterItems.includes(newFilter)) {
+            try {
+                await addFilterApi({ filter: newFilter });
+                toast.success(`Filter ${newFilter} added successfully`, {
+                    position: "bottom-left",
+                    autoClose: 3000,
+                });
+                const updatedDropdownItems = [...dropdownFilterItems];
+                updatedDropdownItems.push(newFilter);
+                setDropdowFilterItems(updatedDropdownItems);
+            } catch (error) {
+                console.error("Error adding filter:", error);
+                alert(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`);
+                // Handle the error appropriately - maybe show a message to the user
+            }
+            setNewFilter("");
+        } else if (dropdownFilterItems.includes(newFilter)) {
+            toast.error(`Filter ${newFilter} already exists`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
+        }
+    }
 
     return (
         <nav className="bg-white shadow-md navbar">
@@ -109,7 +167,7 @@ export default function NavBar() {
                         {/* Primary Navbar items */}
                         <div className="hidden md:flex items-center space-x-4 ml-4 pt-1">
                             {navLinks.map((link) => (
-                                <a key={link.href} href={link.href} className={linkClass(link.href)}>
+                                <a key={link.href} href={link.href} className={primaryNavItems(link.href)}>
                                     {link.text}
                                 </a>
                             ))}
@@ -132,7 +190,7 @@ export default function NavBar() {
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                                 className="text-gray-700 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center border border-gray-300"
                             >
-                                {selectedItem}
+                                {selectedFilter}
                                 <svg className="ml-2 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 12">
                                     <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5l5 5 5-5" />
                                 </svg>
@@ -140,16 +198,41 @@ export default function NavBar() {
 
                             {/* Dropdown Menu */}
                             {dropdownOpen && (
-                                <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 mt-2">
-                                    <ul className="py-2 text-sm text-gray-700">
-                                        {dropdownItems.map((item) => (
-                                            <li key={item}>
-                                                <a href="#" className="block px-4 py-2 hover:bg-gray-100" onClick={() => handleItemClick(item)}>
-                                                    {item}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-68 mt-2">
+                                    <div className="max-h-80 overflow-y-auto">
+                                        <ul className="py-2 text-sm text-gray-700o">
+                                            {dropdownFilterItems.map((item) => (
+                                                <li key={item}>
+                                                    <div className="flex justify-between hover:bg-gray-100">
+                                                        <button className="px-4 py-2 " onClick={() => handleFilterClick(item)}>
+                                                            {item}
+                                                        </button>
+                                                        {item !== "All servers" &&
+                                                            <button className="pr-2 py-2" onClick={() => handleFilterRemove(item)}>
+                                                                <IoIosRemoveCircleOutline className="text-gray-600 h-5 w-5 hover:text-red-500" />
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </li>
+                                            ))}
+
+                                        </ul>
+                                    </div>
+                                    {/* Fixed 'Add Filter' Field at Bottom */}
+                                    <div className="border-t border-gray-100 pt-2">
+                                        <div className="flex justify-between">
+                                            <input
+                                                type="text"
+                                                placeholder="Add Filter"
+                                                className="bg-white border ml-2 border-gray-100 px-2 mb-2 rounded"
+                                                onChange={(e) => setNewFilter(e.target.value)}
+                                                value={newFilter}
+                                            />
+                                            <button className="bg-white px-2 pb-2" onClick={handleFilterAdd}>
+                                                <IoIosAddCircleOutline className="text-gray-700 h-6 w-6 hover:text-green-500" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -177,6 +260,18 @@ export default function NavBar() {
                     />
                 )}
             </div>
+            <ToastContainer
+                position="bottom-left"
+                autoClose={5000}
+                hideProgressBar
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
         </nav>
     );
 }

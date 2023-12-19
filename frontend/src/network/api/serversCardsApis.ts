@@ -12,6 +12,7 @@ type ICreateServerInfoValues = {
     databaseUsername: string,
     databasePassword: string,
     selectedDatabases: string[],
+    selectedFilters: string[],
 }
 
 export async function addServerMetaInfo(input: ICreateServerInfoValues): Promise<ServerInfo> {

@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Spinner } from "flowbite-react";
 import * as serverCardsApi from "@/network/api/serversCardsApis"
 import * as databaseApi from "@/network/api/databaseApis"
+import { getFilters } from "@/network/api/miscelleneousDataApis";
 
 type IAddServerModalProps = {
     setShowModal: (show: boolean) => void;
@@ -25,6 +26,26 @@ export default function AddServerModal(props: IAddServerModalProps) {
     const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
     const [databases, setDatabases] = useState<string[]>([]);
     const [selectedDatabases, setSelectedDatabases] = useState<string[]>([]);
+
+    //Filters
+    const [filters, setFilters] = useState<string[]>([]);
+    const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+
+
+    // will run only once on component mount
+    useEffect(() => {
+        const fetchFilters = async () => {
+            try {
+                const filtersData = await getFilters();
+                const filterItems = filtersData.filters.map(filter => filter.filter);
+                setFilters(filterItems);
+            } catch (error) {
+                console.error("Error fetching filters:", error);
+            }
+        };
+
+        fetchFilters();
+    }, []);
 
     // To handle adding more node hostname fields
     const addNodeHostnameField = () => {
@@ -74,7 +95,8 @@ export default function AddServerModal(props: IAddServerModalProps) {
                 databaseServerHost: showDatabaseInfo ? databaseServerHost : "",
                 databaseUsername: showDatabaseInfo ? databaseUsername : "",
                 databasePassword: showDatabaseInfo ? databasePassword : "",
-                selectedDatabases: showDatabaseInfo ? selectedDatabases : []
+                selectedDatabases: showDatabaseInfo ? selectedDatabases : [],
+                selectedFilters: selectedFilters
             };
 
             const response = await serverCardsApi.addServerMetaInfo(server);
@@ -221,6 +243,7 @@ export default function AddServerModal(props: IAddServerModalProps) {
                                 selectedOptions={selectedDatabases}
                                 setSelectedOptions={setSelectedDatabases}
                                 placeholder={databases.length == 0 ? "Click on Get to fetch databases" : "Select relevant databases"}
+                                className="mr-4"
                             />
                             <Button
                                 onClick={fetchDatabases}
@@ -230,10 +253,19 @@ export default function AddServerModal(props: IAddServerModalProps) {
                             >
                                 {isLoadingDatabases ? <Spinner aria-label="Small spinner example" color="warning" size="sm" /> : 'Get'}
                             </Button>
-
                         </div>
                     </div>
                 }
+                <h2 className="font-semibold mt-8">
+                    Tags
+                </h2>
+                <CheckboxDropdown
+                    options={filters}
+                    selectedOptions={selectedFilters}
+                    setSelectedOptions={setSelectedFilters}
+                    placeholder={"Select tags for filtering later"}
+                    className="mt-4"
+                />
             </Modal.Body>
             <Modal.Footer className="flex justify-end space-x-2">
                 <Button
@@ -316,9 +348,10 @@ interface CheckboxDropdownProps {
     selectedOptions: string[];
     setSelectedOptions: (selectedOptions: string[]) => void;
     placeholder: string;
+    className?: string;
 }
 
-function CheckboxDropdown({ options, selectedOptions, setSelectedOptions, placeholder }: CheckboxDropdownProps) {
+function CheckboxDropdown({ options, selectedOptions, setSelectedOptions, placeholder, className }: CheckboxDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -348,7 +381,7 @@ function CheckboxDropdown({ options, selectedOptions, setSelectedOptions, placeh
     };
 
     return (
-        <div className="mr-4 flex-1" ref={dropdownRef}>
+        <div className={`flex-1 ${className}`} ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex justify-between items-center text-gray-700 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 border border-gray-300 w-full"

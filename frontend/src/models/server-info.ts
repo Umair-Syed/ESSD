@@ -10,6 +10,7 @@ export interface ServerInfo {
     databaseUsername: string,
     databasePassword: string,
     selectedDatabases: string[],
+    selectedFilters: string[],
     createdAt: string,
     updatedAt: string,
 }

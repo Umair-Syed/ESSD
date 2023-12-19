@@ -11,6 +11,7 @@ const serversMetaSchema = new Schema({
     databaseUsername: { type: String },
     databasePassword: { type: String },
     selectedDatabases: { type: [String] },
+    selectedFilters: { type: [String] },
 }, { timestamps: true });
 
 type IServersMetaSchema = InferSchemaType<typeof serversMetaSchema>;
