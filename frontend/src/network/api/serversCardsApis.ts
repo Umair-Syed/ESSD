@@ -7,6 +7,8 @@ type ICreateServerInfoValues = {
     nodesHostnames: string[],
     userName2443: string,
     password2443: string,
+    usernameSSH: string,
+    passwordSSH: string,
     showDatabaseInfo: boolean,
     databaseServerHost: string,
     databaseUsername: string,

@@ -6,6 +6,8 @@ const serversMetaSchema = new Schema({
     nodesHostnames: { type: [String] },
     userName2443: { type: String, required: true },
     password2443: { type: String, required: true },
+    usernameSSH: { type: String, required: true },
+    passwordSSH: { type: String, required: true },
     showDatabaseInfo: { type: Boolean, required: true },
     databaseServerHost: { type: String },
     databaseUsername: { type: String },

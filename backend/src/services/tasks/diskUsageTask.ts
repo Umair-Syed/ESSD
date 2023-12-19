@@ -1,24 +1,26 @@
-import ServerDataModel  from "../../models/server-data";
+import ServerDataModel from "../../models/server-data";
 import { executeCommandOnSSH, parseSizeToGB } from '../../util';
-import { SERVER_SSH_USERNAME, SERVER_SSH_PASSWORD } from "../../constants";
-  
-  
+
+
 type ICreateServerMetaBody = {
     hostname: string,
     isCluster: boolean,
     nodesHostnames: string[],
     userName2443: string,
     password2443: string,
+    usernameSSH: string,
+    passwordSSH: string,
 }
 
 export default async function updateDiskUsageDataTask(serverMeta: ICreateServerMetaBody) {
     if (serverMeta.isCluster) {
         for (const nodeHostname of serverMeta.nodesHostnames) {
-            const diskUsageData = await getDiskUsage(nodeHostname);
+            // Assuming all nodes in cluster have the same username and password
+            const diskUsageData = await getDiskUsage(nodeHostname, serverMeta.usernameSSH, serverMeta.passwordSSH);
             await updateOrCreateDiskUsageData(serverMeta.hostname, nodeHostname, diskUsageData)
         }
     } else {
-        const diskUsageData = await getDiskUsage(serverMeta.hostname);
+        const diskUsageData = await getDiskUsage(serverMeta.hostname, serverMeta.usernameSSH, serverMeta.passwordSSH);
         await updateOrCreateDiskUsageData(serverMeta.hostname, serverMeta.hostname, diskUsageData)
     }
 }
@@ -31,32 +33,32 @@ interface CurrentDiskUsage {
 async function updateOrCreateDiskUsageData(serverHostname: string, nodeHostname: string, diskUsageData: CurrentDiskUsage) {
     try {
         console.log(`Disk usage data for server ${nodeHostname}:`, JSON.stringify(diskUsageData));
-       // Check if the document and array element exist
-       let server = await ServerDataModel.findOne({ hostname: serverHostname });
-       if (!server) {
-           // If server does not exist, create it with the initial data
-           server = new ServerDataModel({
-               hostname: serverHostname,
-               diskUsages: [{ nodeName: nodeHostname, past20MinUsage: [diskUsageData.used], capacity: diskUsageData.capacity }],
-           });
-           await server.save();
-       } else {
-           // If server exists, check if the specific diskUsage element exists
-           const diskUsage = server.diskUsages.find(du => du.nodeName === nodeHostname);
+        // Check if the document and array element exist
+        let server = await ServerDataModel.findOne({ hostname: serverHostname });
+        if (!server) {
+            // If server does not exist, create it with the initial data
+            server = new ServerDataModel({
+                hostname: serverHostname,
+                diskUsages: [{ nodeName: nodeHostname, past20MinUsage: [diskUsageData.used], capacity: diskUsageData.capacity }],
+            });
+            await server.save();
+        } else {
+            // If server exists, check if the specific diskUsage element exists
+            const diskUsage = server.diskUsages.find(du => du.nodeName === nodeHostname);
 
-           if (!diskUsage) {
-               // If diskUsage element does not exist, add it
-               server.diskUsages.push({ nodeName: nodeHostname, past20MinUsage: [diskUsageData.used], capacity: diskUsageData.capacity });
-           } else {
-               // If diskUsage element exists, update it
-               diskUsage.past20MinUsage.push(diskUsageData.used);
-               if (diskUsage.past20MinUsage.length > 10) {
-                   diskUsage.past20MinUsage.shift(); // Keep only the last 10 elements
-               }
-               diskUsage.capacity = diskUsageData.capacity;
-           }
-           await server.save();
-       }
+            if (!diskUsage) {
+                // If diskUsage element does not exist, add it
+                server.diskUsages.push({ nodeName: nodeHostname, past20MinUsage: [diskUsageData.used], capacity: diskUsageData.capacity });
+            } else {
+                // If diskUsage element exists, update it
+                diskUsage.past20MinUsage.push(diskUsageData.used);
+                if (diskUsage.past20MinUsage.length > 10) {
+                    diskUsage.past20MinUsage.shift(); // Keep only the last 10 elements
+                }
+                diskUsage.capacity = diskUsageData.capacity;
+            }
+            await server.save();
+        }
     } catch (error) {
         console.error(`Failed to update disk data for server ${nodeHostname}:`, error);
     }
@@ -64,15 +66,19 @@ async function updateOrCreateDiskUsageData(serverHostname: string, nodeHostname:
 
 
 
-async function getDiskUsage(hostname: string): Promise<CurrentDiskUsage> {
+async function getDiskUsage(
+    hostname: string,
+    serverSSHUsername: string,
+    serverSSHPassword: string
+): Promise<CurrentDiskUsage> {
     const command = `df -h`;
     try {
-      const output = await executeCommandOnSSH(command, hostname, SERVER_SSH_USERNAME, SERVER_SSH_PASSWORD);
-      console.log(`Command output: ${output}`);
-      return parseDiskUsageData(output);
+        const output = await executeCommandOnSSH(command, hostname, serverSSHUsername, serverSSHPassword);
+        console.log(`Command output: ${output}`);
+        return parseDiskUsageData(output);
     } catch (e) {
-      console.error(`GetDiskUsage failed for ${hostname}---Error: `, e)
-    }  
+        console.error(`GetDiskUsage failed for ${hostname}---Error: `, e)
+    }
     return { used: 0, capacity: 0 };
 }
 
@@ -96,14 +102,14 @@ function parseDiskUsageData(data: string): CurrentDiskUsage {
 function extractVolumeData(output: string, volume: string): CurrentDiskUsage {
     const lines = output.split('\n');
     for (const line of lines) {
-      if (line.includes(volume)) {
-        const parts = line.split(/\s+/);
-        // Expecting Size to be in first column and Used in second column
-        return {
-            capacity: parseSizeToGB(parts[1]), // Input format example: 98G
-            used: parseSizeToGB(parts[2])
-        };
-      }
+        if (line.includes(volume)) {
+            const parts = line.split(/\s+/);
+            // Expecting Size to be in first column and Used in second column
+            return {
+                capacity: parseSizeToGB(parts[1]), // Input format example: 98G
+                used: parseSizeToGB(parts[2])
+            };
+        }
     }
     return { used: 0, capacity: 0 };
 }

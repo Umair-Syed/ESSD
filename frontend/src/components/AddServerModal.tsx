@@ -4,6 +4,9 @@ import { Modal, Button, Spinner } from "flowbite-react";
 import * as serverCardsApi from "@/network/api/serversCardsApis"
 import * as databaseApi from "@/network/api/databaseApis"
 import { getFilters } from "@/network/api/miscelleneousDataApis";
+import { IoCellular } from "react-icons/io5";
+import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
+import { IconType } from "react-icons";
 
 type IAddServerModalProps = {
     setShowModal: (show: boolean) => void;
@@ -11,20 +14,22 @@ type IAddServerModalProps = {
 }
 
 export default function AddServerModal(props: IAddServerModalProps) {
-    const [hostname, setHostname] = useState('');
     const [formErrors, setFormErrors] = useState<string[]>([]);
 
+    const [hostname, setHostname] = useState('');
     const [isCluster, setIsCluster] = useState(false);
     const [nodeHostnames, setNodeHostnames] = useState(['']);
+
     const [username2443, setUsername2443] = useState('admin');
     const [password2443, setPassword2443] = useState('1ntell1dot');
+
+    const [usernameSSH, setUsernameSSH] = useState('root');
+    const [passwordSSH, setPasswordSSH] = useState('1ntell1dot');
 
     const [showDatabaseInfo, setShowDatabaseInfo] = useState(false);
     const [databaseServerHost, setDatabaseServerHost] = useState('blr-edge-sql01.vcraeng.com');
     const [databaseUsername, setDatabaseUsername] = useState('sa');
     const [databasePassword, setDatabasePassword] = useState('1ntell1dot!');
-    const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
-    const [databases, setDatabases] = useState<string[]>([]);
     const [selectedDatabases, setSelectedDatabases] = useState<string[]>([]);
 
     //Filters
@@ -47,18 +52,6 @@ export default function AddServerModal(props: IAddServerModalProps) {
         fetchFilters();
     }, []);
 
-    // To handle adding more node hostname fields
-    const addNodeHostnameField = () => {
-        setNodeHostnames([...nodeHostnames, '']);
-    };
-
-    // To update specific node hostname in the array
-    const updateNodeHostname = (index: number, value: string) => {
-        const updatedHostnames = [...nodeHostnames];
-        updatedHostnames[index] = value;
-        setNodeHostnames(updatedHostnames);
-    };
-
     async function handleAddServer() {
         //1. validate fields
         const errors: string[] = [];
@@ -69,6 +62,8 @@ export default function AddServerModal(props: IAddServerModalProps) {
             nodeHostnames,
             username2443,
             password2443,
+            usernameSSH,
+            passwordSSH,
             showDatabaseInfo,
             databaseServerHost,
             databaseUsername,
@@ -91,6 +86,8 @@ export default function AddServerModal(props: IAddServerModalProps) {
                 nodesHostnames: isCluster ? nodeHostnames : [],
                 userName2443: username2443,
                 password2443: password2443,
+                usernameSSH: usernameSSH,
+                passwordSSH: passwordSSH,
                 showDatabaseInfo: showDatabaseInfo,
                 databaseServerHost: showDatabaseInfo ? databaseServerHost : "",
                 databaseUsername: showDatabaseInfo ? databaseUsername : "",
@@ -113,6 +110,237 @@ export default function AddServerModal(props: IAddServerModalProps) {
     };
 
 
+    return (
+        <Modal
+            show={props.showModal}
+            onClose={() => props.setShowModal(false)}
+        >
+            <Modal.Header className="bg-gray-100">
+                Add server
+                {formErrors.length > 0 &&
+                    <div>
+                        <span className="text-red-700 text-sm font-semibold">Errors:</span>
+                        {formErrors.map((error, index) => (
+                            <p key={index} className="text-red-700 text-sm font-light">{error}</p>
+                        ))}
+                    </div>
+
+                }
+            </Modal.Header>
+            <Modal.Body className="bg-gray-100">
+                <HostnameFields
+                    isCluster={isCluster}
+                    setIsCluster={setIsCluster}
+                    hostname={hostname}
+                    setHostname={setHostname}
+                    nodeHostnames={nodeHostnames}
+                    setNodeHostnames={setNodeHostnames}
+                />
+                <FieldsWithUsernameAndPassword
+                    title="Services"
+                    description={hostname ? `${hostname}:2443 credentials` : 'Hostname:2443 credentials'}
+                    usernameDefaultValue={username2443}
+                    passwordDefaultValue={password2443}
+                    setUsername={setUsername2443}
+                    setPassword={setPassword2443}
+                    icons={[IoCellular]}
+                />
+                <FieldsWithUsernameAndPassword
+                    title="Disk & Memory"
+                    description={hostname ? `${hostname} SSH credentials` : 'Hostname SSH credentials'}
+                    usernameDefaultValue={usernameSSH}
+                    passwordDefaultValue={passwordSSH}
+                    setUsername={setUsernameSSH}
+                    setPassword={setPasswordSSH}
+                    icons={[FaHardDrive, FaMemory]}
+                />
+
+                <DatabaseFields
+                    showDatabaseInfo={showDatabaseInfo}
+                    setShowDatabaseInfo={setShowDatabaseInfo}
+                    databaseServerHost={databaseServerHost}
+                    setDatabaseServerHost={setDatabaseServerHost}
+                    databaseUsername={databaseUsername}
+                    setDatabaseUsername={setDatabaseUsername}
+                    databasePassword={databasePassword}
+                    setDatabasePassword={setDatabasePassword}
+                    selectedDatabases={selectedDatabases}
+                    setSelectedDatabases={setSelectedDatabases}
+                    setFormErrors={setFormErrors}
+                />
+                
+                <h2 className=" text-gray-700 text-lg font-bold mt-8 ml-2">
+                    Tags
+                </h2>
+                <CheckboxDropdown
+                    options={filters}
+                    selectedOptions={selectedFilters}
+                    setSelectedOptions={setSelectedFilters}
+                    placeholder={"Select tags for filtering later"}
+                    className="mt-4"
+                />
+            </Modal.Body>
+            <Modal.Footer className="flex justify-end space-x-2 bg-gray-100">
+                <Button
+                    onClick={() => props.setShowModal(false)}
+                    color="gray"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    onClick={handleAddServer}
+                    color="dark"
+                >
+                    Add
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+}
+
+interface IHostnameFieldsProps {
+    isCluster: boolean;
+    setIsCluster: (isCluster: boolean) => void;
+    hostname: string;
+    setHostname: (hostname: string) => void;
+    nodeHostnames: string[];
+    setNodeHostnames: (nodeHostnames: string[]) => void;
+
+}
+
+// Section 1: Hostname fields with isCluster checkbox component
+function HostnameFields({ isCluster, setIsCluster, hostname, setHostname, nodeHostnames, setNodeHostnames }: IHostnameFieldsProps) {
+
+    // To handle adding more node hostname fields
+    const addNodeHostnameField = () => {
+        setNodeHostnames([...nodeHostnames, '']);
+    };
+
+    // To update specific node hostname in the array
+    const updateNodeHostname = (index: number, value: string) => {
+        const updatedHostnames = [...nodeHostnames];
+        updatedHostnames[index] = value;
+        setNodeHostnames(updatedHostnames);
+    };
+
+    return (
+        <div className="px-4 py-6 bg-white rounded-md shadow-sm">
+            <input
+                type="text"
+                placeholder="Hostname"
+                value={hostname}
+                onChange={(e) => setHostname(e.target.value)}
+                className="mb-4 w-full p-2 border border-gray-300 rounded"
+            />
+
+            <label className="flex items-center ml-2 text-gray-700">
+                <span>Is cluster?</span>
+                <input
+                    type="checkbox"
+                    checked={isCluster}
+                    onChange={(e) => setIsCluster(e.target.checked)}
+                    className="ml-2"
+                />
+            </label>
+            {isCluster && nodeHostnames.map((nodeHostname, index) => (
+                <div key={index} className="flex items-center my-2 gap-3">
+                    <input
+                        type="text"
+                        placeholder="Node hostname"
+                        value={nodeHostname}
+                        onChange={(e) => updateNodeHostname(index, e.target.value)}
+                        className="mr-2 p-2 border border-gray-300 rounded flex-grow"
+                    />
+                    {index === nodeHostnames.length - 1 && (
+                        <button
+                            onClick={addNodeHostnameField}
+                            className="p-2 rounded-full bg-gray-500 text-white"
+                        >
+                            <span className="p-2">+</span>
+                        </button>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+interface IFieldsWithUsernameAndPasswordProps {
+    title: string,
+    description: string,
+    usernameDefaultValue: string;
+    passwordDefaultValue: string;
+    setUsername: (username: string) => void;
+    setPassword: (password: string) => void;
+    icons: IconType[];
+}
+
+// Section 2 & 3: Service and disk/memory fields component
+function FieldsWithUsernameAndPassword({ title, description, setUsername, setPassword, usernameDefaultValue, passwordDefaultValue, icons }: IFieldsWithUsernameAndPasswordProps) {
+    return (
+        <div className="px-4 py-6 bg-white rounded-md shadow-sm mt-4">
+            <div className="flex justify-between mb-2">
+                <h2 className=" text-gray-700 text-lg font-bold">
+                    {title}
+                </h2>
+                <div className="flex">
+                    {icons.map((IconComponent, index) => (
+                        <IconComponent key={index} className="text-gray-400 w-6 h-6 ml-3" />
+                    ))}
+                </div>
+            </div>
+            <p className="text-gray-500 text-sm mb-4">{description}</p>
+
+            <input
+                type="text"
+                placeholder="username"
+                defaultValue={usernameDefaultValue}
+                onChange={(e) => setUsername(e.target.value)}
+                className="mb-2 w-full p-2 border border-gray-300 rounded"
+            />
+            <input
+                type="text"
+                placeholder="password"
+                defaultValue={passwordDefaultValue}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded"
+            />
+        </div>
+    );
+}
+
+
+interface IDatabaseFieldsProps {
+    showDatabaseInfo: boolean;
+    setShowDatabaseInfo: (showDatabaseInfo: boolean) => void;
+    databaseServerHost: string;
+    setDatabaseServerHost: (databaseServerHost: string) => void;
+    databaseUsername: string;
+    setDatabaseUsername: (databaseUsername: string) => void;
+    databasePassword: string;
+    setDatabasePassword: (databasePassword: string) => void;
+    selectedDatabases: string[];
+    setSelectedDatabases: (selectedDatabases: string[]) => void;
+    setFormErrors: (errors: string[]) => void;
+}
+
+// Section 2: Service fields component
+function DatabaseFields({
+    showDatabaseInfo,
+    setShowDatabaseInfo,
+    databaseServerHost,
+    setDatabaseServerHost,
+    databaseUsername,
+    setDatabaseUsername,
+    databasePassword,
+    setDatabasePassword,
+    selectedDatabases,
+    setSelectedDatabases,
+    setFormErrors
+}: IDatabaseFieldsProps) {
+    const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
+    const [databases, setDatabases] = useState<string[]>([]);
+
     const fetchDatabases = async () => {
         setIsLoadingDatabases(true);
         try {
@@ -132,156 +360,66 @@ export default function AddServerModal(props: IAddServerModalProps) {
     };
 
     return (
-        <Modal
-            show={props.showModal}
-            onClose={() => props.setShowModal(false)}
-        >
-            <Modal.Header>
-                Add server
-                {formErrors.length > 0 &&
-                    <div>
-                        <span className="text-red-700 text-sm font-semibold">Errors:</span>
-                        {formErrors.map((error, index) => (
-                            <p key={index} className="text-red-700 text-sm font-light">{error}</p>
-                        ))}
-                    </div>
-
-                }
-            </Modal.Header>
-            <Modal.Body>
-                <input
-                    type="text"
-                    placeholder="Hostname"
-                    value={hostname}
-                    onChange={(e) => setHostname(e.target.value)}
-                    className="mb-4 w-full p-2 border border-gray-300 rounded"
-                />
-
-                <label className="flex items-center mb-8">
-                    <span>Is cluster?</span>
-                    <input
-                        type="checkbox"
-                        checked={isCluster}
-                        onChange={(e) => setIsCluster(e.target.checked)}
-                        className="ml-2"
-                    />
-                </label>
-                {isCluster && nodeHostnames.map((nodeHostname, index) => (
-                    <div key={index} className="flex items-center mb-2 gap-3">
-                        <input
-                            type="text"
-                            placeholder="Node hostname"
-                            value={nodeHostname}
-                            onChange={(e) => updateNodeHostname(index, e.target.value)}
-                            className="mr-2 p-2 border border-gray-300 rounded flex-grow"
-                        />
-                        {index === nodeHostnames.length - 1 && (
-                            <button
-                                onClick={addNodeHostnameField}
-                                className="p-2 rounded-full bg-gray-500 text-white"
-                            >
-                                <span className="p-2">+</span>
-                            </button>
-                        )}
-                    </div>
-                ))}
-
-                <h2 className="font-semibold mb-4 mt-8">
-                    {hostname ? `${hostname}:2443` : 'Hostname:2443'} credentials
+        <div className="px-4 py-6 bg-white rounded-md shadow-sm mt-4">
+            <div className="flex justify-between mb-2">
+                <h2 className=" text-gray-700 text-lg font-bold">
+                    Databases
                 </h2>
-
+                <FaDatabase className="text-gray-400 w-6 h-6 ml-3" />
+            </div>
+            <div className="flex items-center">
+                <p className="text-xs text-gray-500">Display database status</p>
                 <input
-                    type="text"
-                    placeholder="username"
-                    defaultValue="admin"
-                    onChange={(e) => setUsername2443(e.target.value)}
-                    className="mb-2 w-full p-2 border border-gray-300 rounded"
+                    type="checkbox"
+                    checked={showDatabaseInfo}
+                    onChange={(e) => setShowDatabaseInfo(e.target.checked)}
+                    className="ml-2"
                 />
-                <input
-                    type="text"
-                    placeholder="password"
-                    defaultValue="1ntell1dot"
-                    onChange={(e) => setPassword2443(e.target.value)}
-                    className="w-full p-2 mb-8 border border-gray-300 rounded"
-                />
-                <label className="flex items-center mb-2">
-                    <span>Show database info: </span>
+            </div>
+            {showDatabaseInfo &&
+                <div className="flex flex-col mt-4">
+                    <p className="text-gray-500 text-xs mb-4">You need to fill database hostname and credentials. Then select the relevant databases.</p>
                     <input
-                        type="checkbox"
-                        checked={showDatabaseInfo}
-                        onChange={(e) => setShowDatabaseInfo(e.target.checked)}
-                        className="ml-2"
+                        type="text"
+                        placeholder="Database Host"
+                        defaultValue={databaseServerHost}
+                        onChange={(e) => setDatabaseServerHost(e.target.value)}
+                        className="mb-2 w-full p-2 border border-gray-300 rounded"
                     />
-                </label>
-                {showDatabaseInfo &&
-                    <div className="flex flex-col">
-                        <p className="font-light text-xs text-gray-400 mb-2">You need to fill database hostname and credentials. Then select the relevant databases.</p>
-                        <input
-                            type="text"
-                            placeholder="Database Host"
-                            defaultValue="blr-edge-sql01.vcraeng.com"
-                            onChange={(e) => setDatabaseServerHost(e.target.value)}
-                            className="mb-2 w-full p-2 border border-gray-300 rounded"
+                    <input
+                        type="text"
+                        placeholder="Database Username"
+                        defaultValue={databaseUsername}
+                        onChange={(e) => setDatabaseUsername(e.target.value)}
+                        className="mb-2 w-full p-2 border border-gray-300 rounded"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Database Password"
+                        defaultValue={databasePassword}
+                        onChange={(e) => setDatabasePassword(e.target.value)}
+                        className="mb-2 w-full p-2 border border-gray-300 rounded"
+                    />
+                    <div className="flex justify-between">
+                        <CheckboxDropdown
+                            options={databases}
+                            selectedOptions={selectedDatabases}
+                            setSelectedOptions={setSelectedDatabases}
+                            placeholder={databases.length == 0 ? "Click on Get to fetch databases" : "Select relevant databases"}
+                            className="mr-4"
                         />
-                        <input
-                            type="text"
-                            placeholder="Database Username"
-                            defaultValue="sa"
-                            onChange={(e) => setDatabaseUsername(e.target.value)}
-                            className="mb-2 w-full p-2 border border-gray-300 rounded"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Database Password"
-                            defaultValue="1ntell1dot!"
-                            onChange={(e) => setDatabasePassword(e.target.value)}
-                            className="mb-2 w-full p-2 border border-gray-300 rounded"
-                        />
-                        <div className="flex justify-between">
-                            <CheckboxDropdown
-                                options={databases}
-                                selectedOptions={selectedDatabases}
-                                setSelectedOptions={setSelectedDatabases}
-                                placeholder={databases.length == 0 ? "Click on Get to fetch databases" : "Select relevant databases"}
-                                className="mr-4"
-                            />
-                            <Button
-                                onClick={fetchDatabases}
-                                color="dark"
-                                disabled={isLoadingDatabases}
-                                className="disabled:opacity-100 h-10"
-                            >
-                                {isLoadingDatabases ? <Spinner aria-label="Small spinner example" color="warning" size="sm" /> : 'Get'}
-                            </Button>
-                        </div>
+                        <Button
+                            onClick={fetchDatabases}
+                            color="dark"
+                            disabled={isLoadingDatabases}
+                            className="disabled:opacity-100 h-10"
+                        >
+                            {isLoadingDatabases ? <Spinner aria-label="Small spinner example" color="warning" size="sm" /> : 'Get'}
+                        </Button>
                     </div>
-                }
-                <h2 className="font-semibold mt-8">
-                    Tags
-                </h2>
-                <CheckboxDropdown
-                    options={filters}
-                    selectedOptions={selectedFilters}
-                    setSelectedOptions={setSelectedFilters}
-                    placeholder={"Select tags for filtering later"}
-                    className="mt-4"
-                />
-            </Modal.Body>
-            <Modal.Footer className="flex justify-end space-x-2">
-                <Button
-                    onClick={() => props.setShowModal(false)}
-                    color="gray"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={handleAddServer}
-                    color="dark"
-                >
-                    Add
-                </Button>
-            </Modal.Footer>
-        </Modal>
+                </div>
+            }
+        </div>
     );
 }
 
@@ -292,6 +430,8 @@ function validateFormFields(
     nodeHostnames: string[],
     username2443: string,
     password2443: string,
+    usernameSSH: string,
+    passwordSSH: string,
     showDatabaseInfo: boolean,
     databaseServerHost: string,
     databaseUsername: string,
@@ -326,6 +466,12 @@ function validateFormFields(
     }
     if (password2443.length === 0) {
         errors.push(`Password for ${hostname}:2443 is required`);
+    }
+    if (usernameSSH.length === 0) {
+        errors.push(`Username for ${hostname} SSH is required`);
+    }
+    if (passwordSSH.length === 0) {
+        errors.push(`Password for ${hostname} SSH is required`);
     }
     if (showDatabaseInfo) {
         if (databaseServerHost.length === 0) {

@@ -5,8 +5,8 @@ import ServerDataModel  from "../models/server-data";
 
 export const getServersMeta: RequestHandler = async (req, res) => {
     try {
-        const serversMeta = await ServerMetaModel.find().exec();
-        console.log(serversMeta);   
+        // If ever use it, don't expose the passwords
+        const serversMeta = await ServerMetaModel.find().exec(); 
         res.status(200).json(serversMeta);
     } catch (error) {
         console.log(error);
@@ -20,6 +20,8 @@ type ICreateServerMetaBody = {
     nodesHostnames: string[],
     userName2443: string,
     password2443: string,
+    usernameSSH: string,
+    passwordSSH: string,
     showDatabaseInfo: boolean,
     databaseServerHost: string,
     databaseUsername: string,
@@ -35,6 +37,8 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
         nodesHostnames, 
         userName2443, 
         password2443,
+        usernameSSH,
+        passwordSSH,
         showDatabaseInfo,
         databaseServerHost,
         databaseUsername,
@@ -50,6 +54,8 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
             nodesHostnames, // will be empty if isCluster is false
             userName2443,
             password2443,
+            usernameSSH,
+            passwordSSH,
             showDatabaseInfo,
             databaseServerHost, // will be empty if showDatabaseInfo is false
             databaseUsername, // will be empty if showDatabaseInfo is false
