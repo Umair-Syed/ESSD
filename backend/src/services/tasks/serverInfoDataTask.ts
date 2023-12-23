@@ -14,6 +14,10 @@ interface ICreateServerMetaBody {
 export default async function updateServerInfoDataTask(serverMeta: ICreateServerMetaBody) {
     try {
         const serverVersion = await getServerVersion(serverMeta.hostname, serverMeta.usernameSSH, serverMeta.passwordSSH);
+        if (serverVersion === "") {
+            console.error(`Failed to get server version for ${serverMeta.hostname}`);
+            return;
+        }
         await ServerDataModel.findOneAndUpdate(
             { hostname: serverMeta.hostname },
             { 
