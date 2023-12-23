@@ -1,19 +1,30 @@
 'use client';
 import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Spinner } from "flowbite-react";
-import * as serverCardsApi from "@/network/api/serversCardsApis"
+import * as serverMetaApi from "@/network/api/serversMetaApis"
 import * as databaseApi from "@/network/api/databaseApis"
 import { getFilters } from "@/network/api/miscelleneousDataApis";
 import { IoCellular } from "react-icons/io5";
 import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
 import { IconType } from "react-icons";
+import { useServersData } from '@/contexts/ServersDataContext';
+import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
+import { ServerData } from '@/models/server-data';
+import { updateServerMetaInfo } from "@/network/api/serversMetaApis"
 
-type IAddServerModalProps = {
+interface IAddServerModalProps {
     setShowModal: (show: boolean) => void;
     showModal: boolean;
+    isEdit: boolean;
+    server?: ServerData;
 }
 
-export default function AddServerModal(props: IAddServerModalProps) {
+export default function AddServerModal({
+    setShowModal,
+    showModal,
+    isEdit = false,
+    server = undefined // Providing a default value
+}: IAddServerModalProps) {
     const [formErrors, setFormErrors] = useState<string[]>([]);
 
     const [hostname, setHostname] = useState('');
@@ -34,8 +45,10 @@ export default function AddServerModal(props: IAddServerModalProps) {
 
     //Filters
     const [filters, setFilters] = useState<string[]>([]);
-    const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]); // tags for server being added
 
+    const { selectedFilter } = useSelectedFilter(); // from context, current selected filter from UI
+    const { serversData, setServersData } = useServersData(); // new server will be added to this
 
     // will run only once on component mount
     useEffect(() => {
@@ -49,15 +62,17 @@ export default function AddServerModal(props: IAddServerModalProps) {
             }
         };
 
+        // set selected tags if isEdit
+        if (isEdit && server) {
+            setSelectedTags(server.selectedFilters);
+        }
+
         fetchFilters();
     }, []);
 
-    async function handleAddServer() {
-        //1. validate fields
-        const errors: string[] = [];
-        validateFormFields(
+    const onAddServerClick = () => {
+        handleAddServer({
             hostname,
-            errors,
             isCluster,
             nodeHostnames,
             username2443,
@@ -68,55 +83,54 @@ export default function AddServerModal(props: IAddServerModalProps) {
             databaseServerHost,
             databaseUsername,
             databasePassword,
-            selectedDatabases
-        );
-        if (errors.length > 0) {
-            console.error(`validateFormFields Errors: ${errors}`);
-            setFormErrors(errors);
-            return;
-        } else {
-            setFormErrors([]);
-        }
-        //2. send post request to backend
-        try {
-            console.log(`hostname: ${hostname}, isCluster: ${isCluster}, nodeHostnames: ${nodeHostnames}, username2443: ${username2443}, password2443: ${password2443} showDatabaseInfo: ${showDatabaseInfo}, databaseServerHost: ${databaseServerHost}, databaseUsername: ${databaseUsername}, databasePassword: ${databasePassword}, selectedDatabasess: ${selectedDatabases}`)
-            const server = {
-                hostname: hostname,
-                isCluster: isCluster,
-                nodesHostnames: isCluster ? nodeHostnames : [],
-                userName2443: username2443,
-                password2443: password2443,
-                usernameSSH: usernameSSH,
-                passwordSSH: passwordSSH,
-                showDatabaseInfo: showDatabaseInfo,
-                databaseServerHost: showDatabaseInfo ? databaseServerHost : "",
-                databaseUsername: showDatabaseInfo ? databaseUsername : "",
-                databasePassword: showDatabaseInfo ? databasePassword : "",
-                selectedDatabases: showDatabaseInfo ? selectedDatabases : [],
-                selectedFilters: selectedFilters
-            };
+            selectedDatabases,
+            selectedTags,   // tags for server being added
+            selectedFilter,  // current selected filter from UI
+            serversData, // current servers data (from context)
+            setServersData, // to update servers data once new server is added (to context)
+            setFormErrors,
+            setShowModal
+        });
+    };
 
-            const response = await serverCardsApi.addServerMetaInfo(server);
-            props.setShowModal(false);
-            alert(`Success: ${response.hostname} added successfully!`);
+    const onUpdateServerClick = async () => {
+        const updatedServerValues = {
+            hostname: server!.hostname,
+            selectedFilters: selectedTags
+        }
+        try {
+            console.log("$$$$ updatedServerValues: ", updatedServerValues);
+            const updatedServerDataResponse = await updateServerMetaInfo(updatedServerValues);
+            if (updatedServerDataResponse.status === 201) {
+                alert(`Success: ${updatedServerDataResponse.data.hostname} updated successfully!`);
+                
+                // if current selectedFilter matches with this server's filter, then add this server to the list
+                if (selectedFilter === "All servers" || updatedServerDataResponse.data.selectedFilters.includes(selectedFilter)) {
+                    if (!serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)){
+                        setServersData([updatedServerDataResponse.data, ...serversData]);
+                    }
+                } else {
+                    // removing if filter does not match with current selected filter
+                    if (serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)){
+                        console.log("$$$$ removing server from list: ", updatedServerDataResponse.data.hostname);
+                        const updatedServersData = serversData.filter(server => server.hostname !== updatedServerDataResponse.data.hostname);
+                        setServersData(updatedServersData);
+                    }
+                }
+            }
         } catch (error) {
             console.error(error);
             alert(error);
         }
-        //3. Verify response
-        //4. close modal
-        //4. If success, show toast, else show error toast
-        //5. If success, refresh servers list asynchronously
     };
-
 
     return (
         <Modal
-            show={props.showModal}
-            onClose={() => props.setShowModal(false)}
+            show={showModal}
+            onClose={() => setShowModal(false)}
         >
-            <Modal.Header className="bg-gray-100">
-                Add server
+            <Modal.Header className="bg-gray-100 pl-8">
+                {isEdit ? `Edit ${server?.hostname}` : "Add server"}
                 {formErrors.length > 0 &&
                     <div>
                         <span className="text-red-700 text-sm font-semibold">Errors:</span>
@@ -128,15 +142,15 @@ export default function AddServerModal(props: IAddServerModalProps) {
                 }
             </Modal.Header>
             <Modal.Body className="bg-gray-100">
-                <HostnameFields
+                {!isEdit && <HostnameFields
                     isCluster={isCluster}
                     setIsCluster={setIsCluster}
                     hostname={hostname}
                     setHostname={setHostname}
                     nodeHostnames={nodeHostnames}
                     setNodeHostnames={setNodeHostnames}
-                />
-                <FieldsWithUsernameAndPassword
+                />}
+                {!isEdit && <FieldsWithUsernameAndPassword
                     title="Services"
                     description={hostname ? `${hostname}:2443 credentials` : 'Hostname:2443 credentials'}
                     usernameDefaultValue={username2443}
@@ -144,8 +158,8 @@ export default function AddServerModal(props: IAddServerModalProps) {
                     setUsername={setUsername2443}
                     setPassword={setPassword2443}
                     icons={[IoCellular]}
-                />
-                <FieldsWithUsernameAndPassword
+                />}
+                {!isEdit && <FieldsWithUsernameAndPassword
                     title="Disk & Memory"
                     description={hostname ? `${hostname} SSH credentials` : 'Hostname SSH credentials'}
                     usernameDefaultValue={usernameSSH}
@@ -153,9 +167,9 @@ export default function AddServerModal(props: IAddServerModalProps) {
                     setUsername={setUsernameSSH}
                     setPassword={setPasswordSSH}
                     icons={[FaHardDrive, FaMemory]}
-                />
+                />}
 
-                <DatabaseFields
+                {!isEdit && <DatabaseFields
                     showDatabaseInfo={showDatabaseInfo}
                     setShowDatabaseInfo={setShowDatabaseInfo}
                     databaseServerHost={databaseServerHost}
@@ -167,36 +181,123 @@ export default function AddServerModal(props: IAddServerModalProps) {
                     selectedDatabases={selectedDatabases}
                     setSelectedDatabases={setSelectedDatabases}
                     setFormErrors={setFormErrors}
-                />
-                
-                <h2 className=" text-gray-700 text-lg font-bold mt-8 ml-2">
+                />}
+
+                <h2 className={`text-gray-700 text-lg font-bold ${isEdit ? "mt-1" : "mt-8"} ml-2`}>
                     Tags
                 </h2>
                 <CheckboxDropdown
                     options={filters}
-                    selectedOptions={selectedFilters}
-                    setSelectedOptions={setSelectedFilters}
+                    selectedOptions={selectedTags}
+                    setSelectedOptions={setSelectedTags}
                     placeholder={"Select tags for filtering later"}
                     className="mt-4"
                 />
             </Modal.Body>
             <Modal.Footer className="flex justify-end space-x-2 bg-gray-100">
                 <Button
-                    onClick={() => props.setShowModal(false)}
+                    onClick={() => setShowModal(false)}
                     color="gray"
                 >
                     Cancel
                 </Button>
                 <Button
-                    onClick={handleAddServer}
+                    onClick={isEdit ? onUpdateServerClick : onAddServerClick}
                     color="dark"
                 >
-                    Add
+                    {isEdit ? "Update" : "Add"}
                 </Button>
             </Modal.Footer>
         </Modal>
     );
 }
+
+interface IHandleAddServerProps {
+    hostname: string;
+    isCluster: boolean;
+    nodeHostnames: string[];
+    username2443: string;
+    password2443: string;
+    usernameSSH: string;
+    passwordSSH: string;
+    showDatabaseInfo: boolean;
+    databaseServerHost: string;
+    databaseUsername: string;
+    databasePassword: string;
+    selectedDatabases: string[];
+    selectedTags: string[];
+    selectedFilter: string;
+    serversData: ServerData[];
+    setServersData: (serversData: ServerData[]) => void;
+    setFormErrors: (errors: string[]) => void;
+    setShowModal: (show: boolean) => void;
+}
+
+async function handleAddServer({ hostname, isCluster, nodeHostnames, username2443, password2443, usernameSSH, passwordSSH, showDatabaseInfo, databaseServerHost, databaseUsername, databasePassword, selectedDatabases, selectedTags, selectedFilter, serversData, setServersData, setFormErrors, setShowModal }: IHandleAddServerProps) {
+    //1. validate fields
+    const errors: string[] = [];
+    validateFormFields(
+        hostname,
+        errors,
+        isCluster,
+        nodeHostnames,
+        username2443,
+        password2443,
+        usernameSSH,
+        passwordSSH,
+        showDatabaseInfo,
+        databaseServerHost,
+        databaseUsername,
+        databasePassword,
+        selectedDatabases
+    );
+    if (errors.length > 0) {
+        console.error(`validateFormFields Errors: ${errors}`);
+        setFormErrors(errors);
+        return;
+    } else {
+        setFormErrors([]);
+    }
+    //2. send post request to backend
+    try {
+        console.log(`ADDING: hostname: ${hostname}, isCluster: ${isCluster}, nodeHostnames: ${nodeHostnames}, username2443: ${username2443}, password2443: ${password2443} showDatabaseInfo: ${showDatabaseInfo}, databaseServerHost: ${databaseServerHost}, databaseUsername: ${databaseUsername}, databasePassword: ${databasePassword}, selectedDatabasess: ${selectedDatabases}`)
+        const server = {
+            hostname: hostname,
+            isCluster: isCluster,
+            nodesHostnames: isCluster ? nodeHostnames : [],
+            userName2443: username2443,
+            password2443: password2443,
+            usernameSSH: usernameSSH,
+            passwordSSH: passwordSSH,
+            showDatabaseInfo: showDatabaseInfo,
+            databaseServerHost: showDatabaseInfo ? databaseServerHost : "",
+            databaseUsername: showDatabaseInfo ? databaseUsername : "",
+            databasePassword: showDatabaseInfo ? databasePassword : "",
+            selectedDatabases: showDatabaseInfo ? selectedDatabases : [],
+            selectedFilters: selectedTags // tags for filtering later
+        };
+
+        const incompleteServerDataResponse = await serverMetaApi.addServerMetaInfo(server);
+        // will return serverDataResponse with only hostname, filters and timestamps
+
+        //3. Verify response
+        if (incompleteServerDataResponse.status === 201) {
+            alert(`Success: ${incompleteServerDataResponse.data.hostname} added successfully!`);
+
+            // if current selectedFilter matches with this server's filter, then add this server to the list
+            if (selectedFilter === "All servers" || incompleteServerDataResponse.data.selectedFilters.includes(selectedFilter)) {
+                setServersData([incompleteServerDataResponse.data, ...serversData]);
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        alert(error);
+    }
+
+    //4. close modal
+    setShowModal(false);
+};
+
 
 interface IHostnameFieldsProps {
     isCluster: boolean;
@@ -205,7 +306,6 @@ interface IHostnameFieldsProps {
     setHostname: (hostname: string) => void;
     nodeHostnames: string[];
     setNodeHostnames: (nodeHostnames: string[]) => void;
-
 }
 
 // Section 1: Hostname fields with isCluster checkbox component
