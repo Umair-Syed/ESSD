@@ -40,6 +40,7 @@ const serversDataSchema = new Schema({
     memoryPressure: [memoryPressureForNode], // will have only one element for non-cluster servers
     databaseStatus: [databaseStatus],
     selectedFilters: { type: [String] }, // for tags
+    serverVersion: { type: String, default: "" },
 }, { timestamps: true });
 
 

@@ -10,7 +10,11 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      maxHeight: {
+        '128': '32rem',
+      }
+    },
     colors: {
       transparent: 'transparent',
       current: 'currentColor',

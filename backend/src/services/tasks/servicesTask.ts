@@ -52,7 +52,7 @@ async function getServicesData(serverMeta: ICreateServerMetaBody): Promise<Servi
     };
 
     try {
-        const response = await axios.get(url, { headers: headers });
+        const response = await axios.get(url, { headers: headers, timeout: 3000 });
         console.log(`Data: ${JSON.stringify(response.data, null, 2).substring(0, 1000)}`);
         if(response && response.data) {
             return parseServiceData(response.data);

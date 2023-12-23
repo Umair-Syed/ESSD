@@ -18,4 +18,20 @@ const serversMetaSchema = new Schema({
 
 type IServersMetaSchema = InferSchemaType<typeof serversMetaSchema>;
 
-export default model<IServersMetaSchema>("ServersMeta", serversMetaSchema);
+export const ServersMetaModel = model<IServersMetaSchema>("ServersMeta", serversMetaSchema);
+
+export interface IServerMeta {
+    hostname: string;
+    isCluster: boolean;
+    nodesHostnames: string[];
+    userName2443: string;
+    password2443: string;
+    usernameSSH: string;
+    passwordSSH: string;
+    showDatabaseInfo: boolean;
+    databaseServerHost: string;
+    databaseUsername: string;
+    databasePassword: string;
+    selectedDatabases: string[];
+    selectedFilters: string[];
+}

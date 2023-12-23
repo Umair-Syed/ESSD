@@ -12,19 +12,23 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getFilters, deleteFilter } from "@/network/api/miscelleneousDataApis";
 import WarningModal from "./WarningModal";
+import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
 
 
 export default function NavBar() {
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [selectedFilter, setSelectedFilter] = useState("All servers");
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const pathname = usePathname()
+    const pathname = usePathname();
+
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const [showAddServerModal, setShowAddServerModal] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [newFilter, setNewFilter] = useState("");
     const [filters, setFilters] = useState<string[]>(["All servers"]);
     const [showFilterDeleteModal, setShowFilterDeleteModal] = useState(false);
     const [filterToDelete, setFilterToDelete] = useState('');
+
+    const { selectedFilter, setSelectedFilter } = useSelectedFilter();
+
 
     const handleClickOutside = (event: Event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -158,13 +162,13 @@ export default function NavBar() {
     }
 
     return (
-        <nav className="bg-white shadow-md navbar">
+        <nav className="bg-white shadow-sm navbar">
             <div className="container mx-auto px-2 sm:px-4 lg:px-8">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center">
                         {/* Logo */}
                         <a href="/" className="py-4 mr-4">
-                            <Image src="/logo.png" alt="Logo" width={60} height={60} />
+                            <Image src="/logo.png" alt="Logo" width={60} height={60} priority />
                         </a>
                         {/* Primary Navbar items */}
                         <div className="hidden md:flex items-center space-x-4 ml-4 pt-1">

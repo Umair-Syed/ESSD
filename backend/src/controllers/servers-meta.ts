@@ -1,12 +1,12 @@
 import { RequestHandler } from "express";
-import ServerMetaModel  from "../models/server-meta";
-import ServerDataModel  from "../models/server-data";
+import { ServersMetaModel } from "../models/server-meta";
+import ServerDataModel from "../models/server-data";
 
 
 export const getServersMeta: RequestHandler = async (req, res) => {
     try {
         // If ever use it, don't expose the passwords
-        const serversMeta = await ServerMetaModel.find().exec(); 
+        const serversMeta = await ServersMetaModel.find().exec();
         res.status(200).json(serversMeta);
     } catch (error) {
         console.log(error);
@@ -32,10 +32,10 @@ type ICreateServerMetaBody = {
 
 export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMetaBody, unknown> = async (req, res) => {
     const {
-        hostname, 
-        isCluster, 
-        nodesHostnames, 
-        userName2443, 
+        hostname,
+        isCluster,
+        nodesHostnames,
+        userName2443,
         password2443,
         usernameSSH,
         passwordSSH,
@@ -48,7 +48,7 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
     } = req.body;
 
     try {
-        const newServerMeta = await ServerMetaModel.create({
+        await ServersMetaModel.create({
             hostname,
             isCluster,
             nodesHostnames, // will be empty if isCluster is false
@@ -64,9 +64,9 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
             selectedFilters,
         });
 
-        createServerDataWithHostnameAndFilters(hostname, selectedFilters);
+        const newServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters);
 
-        res.status(201).json(newServerMeta);
+        res.status(201).json(newServerData);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error });
@@ -76,13 +76,42 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
 async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[]) {
     /*
         Will create a new server data document in serversdatas collection, with the hostname and filters.
-        Rest of the fields will be created later when CRON task will run.
+        Rest of the fields will be created later when CRON task will run or when refresh API endpoint hit.
     */
-    await ServerDataModel.findOneAndUpdate(
+    const updatedDocument = await ServerDataModel.findOneAndUpdate(
         { hostname: hostname },
-        { 
+        {
             selectedFilters: selectedFilters,
         },
         { upsert: true, new: true }
     );
+
+    return updatedDocument;
+}
+
+
+type IUpdateServerMetaBody = {
+    hostname: string,
+    selectedFilters: string[],
+}
+
+export const updateServerMeta: RequestHandler<unknown, unknown, IUpdateServerMetaBody, unknown> = async (req, res) => {
+    const { hostname, selectedFilters } = req.body;
+    console.log(`$$$$Updating server meta for hostname: ${hostname}...filters: ${selectedFilters.join(", ")}}`);
+    try {
+        await ServersMetaModel.findOneAndUpdate(
+            { hostname: hostname },
+            {
+                selectedFilters: selectedFilters,
+            }
+        );
+
+        // Now updating server data document
+        const updatedServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters);
+
+        res.status(201).json(updatedServerData);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error });
+    }
 }

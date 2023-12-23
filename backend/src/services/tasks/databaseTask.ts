@@ -16,6 +16,10 @@ export type ICreateServerMetaBody = {
 }
 
 export default async function updateDatabaseDataTask(serverMeta: ICreateServerMetaBody) {
+    if (!serverMeta.showDatabaseInfo) {
+        console.log(`Skipping database task for server ${serverMeta.hostname} as showDatabaseInfo is false`);
+        return;
+    }
     try {
         const databaseData = await getDatabaseData(serverMeta);
 

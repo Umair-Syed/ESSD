@@ -8,7 +8,13 @@ import * as ServerDataController from "../controllers/servers-data";
 
 const router = express.Router();
 
-router.get("/", ServerDataController.getServersData); // for all servers
-// router.get("/:hostname", ServerDataController.getServersDataForHostName)); // for individual server
+router.get("/", ServerDataController.getAllServersData); // for all servers
+
+// Example: http://localhost:8000/servers-data/filter?filter=serverTeam
+router.get("/filter", ServerDataController.getServersDataForFilter); // get servers having that tag, will have query param
+
+// Example: http://localhost:8000/servers-data/thor.vcraeng.com
+router.get("/:hostname", ServerDataController.getRefreshedServersDataForHostName); // for individual server, for refresh
+
 
 export default router;

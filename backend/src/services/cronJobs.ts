@@ -1,10 +1,11 @@
 import cron from 'node-cron';
-import ServersMetaModel from '../models/server-meta';
+import { ServersMetaModel } from '../models/server-meta';
 import { ICreateServerMetaBody } from './tasks/databaseTask';
 import updateServicesDataTask from './tasks/servicesTask';
 import updateDatabaseDataTask from './tasks/databaseTask';
 import updateDiskUsageDataTask from './tasks/diskUsageTask';
 import updateMemoryUsageDataTask from './tasks/memoryUsageTask';
+import updateServerInfoDataTask from './tasks/serverInfoDataTask';
 
 const timeInterval = 5; // need to set in database and user will set it from footer
 const smallerTimeInterval = timeInterval < 2 ? timeInterval : 2;
@@ -19,6 +20,7 @@ export default function startCronJobs() {
         for (const server of servers) {
           await updateServicesDataTask(server);
           await updateDatabaseDataTask(server as ICreateServerMetaBody);
+          await updateServerInfoDataTask(server);
         }
       } catch (error) {
         console.error(`Failed to execute update task with time interval: ${timeInterval}, Error: ${error} `);

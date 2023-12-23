@@ -1,7 +1,5 @@
-import { ServerInfo } from '@/models/server-info';
-import axiosInstance from '@/network/axiosInstance';
-
-type ICreateServerInfoValues = {
+export interface ServerMeta {
+    _id: string,
     hostname: string,
     isCluster: boolean,
     nodesHostnames: string[],
@@ -15,9 +13,6 @@ type ICreateServerInfoValues = {
     databasePassword: string,
     selectedDatabases: string[],
     selectedFilters: string[],
-}
-
-export async function addServerMetaInfo(input: ICreateServerInfoValues): Promise<ServerInfo> {
-    const response = await axiosInstance.post<ServerInfo>('/servers-meta', input);
-    return response.data;
+    createdAt: string,
+    updatedAt: string,
 }

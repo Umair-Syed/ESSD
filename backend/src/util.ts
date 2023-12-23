@@ -30,7 +30,8 @@ export function executeCommandOnSSH(command: string, host: string, username: str
       host: host,
       port: 22,
       username: username,
-      password: password
+      password: password,
+      readyTimeout: 5000, // 5 seconds timeout
     });
   });
 }

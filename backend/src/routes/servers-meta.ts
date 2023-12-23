@@ -11,5 +11,6 @@ const router = express.Router();
 // router.get("/", ServerMetaController.getServersMeta); // Don't need this route. It will expose credentials to the frontend.
 
 router.post("/", ServerMetaController.createServerMeta);
+router.put("/", ServerMetaController.updateServerMeta);
 
 export default router;

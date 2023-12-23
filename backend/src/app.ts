@@ -4,6 +4,7 @@ import cors from "cors";
 import env from "./env";
 import morgan from "morgan";
 import serverMetaRoutes from "./routes/servers-meta";
+import serverDataRoutes from "./routes/servers-data";
 import databaseRoutes from "./routes/databases";
 import miscRoutes from "./routes/miscelleneous-data";
 import startCronJobs from './services/cronJobs';
@@ -21,6 +22,7 @@ startCronJobs();
 
 // Routes
 app.use("/servers-meta", serverMetaRoutes);
+app.use("/servers-data", serverDataRoutes);
 app.use("/databases", databaseRoutes);
 app.use("/misc", miscRoutes); // miscelleneous routes - eg. Filters
 
