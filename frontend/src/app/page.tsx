@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { getServersDataForFilter, getAllServersData, getRefreshedServersDataForHostName } from '@/network/api/serversDataApis';
+import { deleteServer } from '@/network/api/serversMetaApis';
 import { ServerData } from '@/models/server-data';
 import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
 import { useServersData } from '@/contexts/ServersDataContext';
@@ -13,6 +14,7 @@ import { MdEdit, MdDelete } from "react-icons/md";
 import { Dropdown } from 'flowbite-react';
 import styles from './page.module.css';
 import AddServerModal from "@/components/AddServerModal";
+import WarningModal from "@/components/WarningModal";
 
 export default function Home() {
   const { selectedFilter } = useSelectedFilter();
@@ -41,22 +43,25 @@ export default function Home() {
   return (
     <div className="p-4 xl:mx-64 lg:mx-32 md:mx-12">
       {serversData.map((server) => (
-        <RowItem key={server.hostname} server={server} toggleExpand={toggleExpand} expandedServer={expandedServer} />
+        <RowItem key={server.hostname} server={server} setServersData={setServersData} serversData={serversData} toggleExpand={toggleExpand} expandedServer={expandedServer} />
       ))}
     </div>
   );
 }
 
 interface IRowItemProps {
-  server: ServerData;
+  server: ServerData; // current item server data
+  serversData: ServerData[];
+  setServersData: (serversData: ServerData[]) => void;
   toggleExpand: (serverHostname: string) => void;
   expandedServer: string | null;
 }
 
-function RowItem({ server, toggleExpand, expandedServer }: IRowItemProps) {
+function RowItem({ server, serversData, setServersData, toggleExpand, expandedServer }: IRowItemProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [serverData, setServerData] = useState<ServerData>(server); // initial value is the server data passed in. Using hook so that can update the data when refreshing.
   const [showEditServerModal, setShowEditServerModal] = useState(false);
+  const [showServerDeleteModal, setShowServerDeleteModal] = useState(false);
 
   useEffect(() => {
     // server.createdAt is within last 5mins (usually cron job interval) and is empty, then refresh data for it. Refreshing because it's a newly added server and new servers don't have all the data.
@@ -83,6 +88,21 @@ function RowItem({ server, toggleExpand, expandedServer }: IRowItemProps) {
     }
 
     setIsRefreshing(false);
+  };
+
+  const handleDeleteServer = async () => {
+    try {
+      const deleteResponse = await deleteServer(server.hostname);
+      if (deleteResponse.data.deletedCount > 0) {
+
+        // remove the server from the serversData
+        const updatedServersData = serversData.filter((serverData) => serverData.hostname !== server.hostname);
+        setServersData(updatedServersData);
+        alert(`Server ${server.hostname} deleted successfully`);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -142,7 +162,9 @@ function RowItem({ server, toggleExpand, expandedServer }: IRowItemProps) {
                   <span>Edit</span>
                 </div>
               </Dropdown.Item>
-              <Dropdown.Item onClick={() => alert('DELETE!')}>
+              <Dropdown.Item onClick={() => {
+                setShowServerDeleteModal(true);
+              }}>
                 <div className='flex items-center gap-4 justify-between'>
                   <MdDelete className='w-4 h-4' />
                   <span>Delete</span>
@@ -174,6 +196,16 @@ function RowItem({ server, toggleExpand, expandedServer }: IRowItemProps) {
           />
         </div>
       )}
+      {showServerDeleteModal &&
+        <div onClick={(e) => { e.stopPropagation() }}>
+          <WarningModal
+            openModal={showServerDeleteModal}
+            setOpenModal={setShowServerDeleteModal}
+            description={`Are you sure you want to delete ${server.hostname}'s all data?`}
+            onConfirm={() => handleDeleteServer()}
+          />
+        </div>
+      }
     </div>
   );
 }

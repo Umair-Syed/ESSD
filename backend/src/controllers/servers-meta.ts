@@ -97,7 +97,6 @@ type IUpdateServerMetaBody = {
 
 export const updateServerMeta: RequestHandler<unknown, unknown, IUpdateServerMetaBody, unknown> = async (req, res) => {
     const { hostname, selectedFilters } = req.body;
-    console.log(`$$$$Updating server meta for hostname: ${hostname}...filters: ${selectedFilters.join(", ")}}`);
     try {
         await ServersMetaModel.findOneAndUpdate(
             { hostname: hostname },
@@ -110,6 +109,19 @@ export const updateServerMeta: RequestHandler<unknown, unknown, IUpdateServerMet
         const updatedServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters);
 
         res.status(201).json(updatedServerData);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error });
+    }
+}
+
+// Deletes both server meta and server data documents
+export const deleteServer: RequestHandler = async (req, res) => {
+    const { hostname } = req.params;
+    try {
+        await ServersMetaModel.deleteOne({ hostname: hostname });
+        const isDeleted = await ServerDataModel.deleteOne({ hostname: hostname });
+        res.status(200).json(isDeleted);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error });

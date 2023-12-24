@@ -264,6 +264,7 @@ export default function NavBar() {
                 {/* Modal to add server */}
                 {showAddServerModal && (
                     <AddServerModal
+                        isEdit={false}
                         showModal={showAddServerModal}
                         setShowModal={setShowAddServerModal}
                     />

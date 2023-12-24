@@ -34,3 +34,12 @@ export async function updateServerMetaInfo(input: IUpdateServerInfoValues): Prom
     const response = await axiosInstance.put<ServerData>('/servers-meta', input);
     return response;
 }
+
+type IDeleteResponse = {
+    deletedCount: number
+}
+
+export async function deleteServer(hostname: string): Promise<AxiosResponse<IDeleteResponse, any>> {
+    const response = await axiosInstance.delete<IDeleteResponse>(`/servers-meta/${hostname}`);
+    return response;
+}

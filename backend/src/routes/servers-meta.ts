@@ -12,5 +12,6 @@ const router = express.Router();
 
 router.post("/", ServerMetaController.createServerMeta);
 router.put("/", ServerMetaController.updateServerMeta);
+router.delete("/:hostname", ServerMetaController.deleteServer);
 
 export default router;
