@@ -22,7 +22,7 @@ export default async function updateServicesDataTask(serverMeta: ICreateServerMe
             { upsert: true, new: true }
         );
     } catch (error) {
-        console.error(`Failed to update data for server ${serverMeta.hostname}:`, error);
+        console.error(`Failed to update services data for server ${serverMeta.hostname}:`, error);
     }
 }
 

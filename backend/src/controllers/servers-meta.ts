@@ -30,6 +30,7 @@ type ICreateServerMetaBody = {
     selectedFilters: string[],
 }
 
+// will add a new server meta document in serversmeta collection and a new server data document with only few fields in serversdatas collection.
 export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMetaBody, unknown> = async (req, res) => {
     const {
         hostname,
@@ -64,7 +65,7 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
             selectedFilters,
         });
 
-        const newServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters);
+        const newServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters, isCluster, showDatabaseInfo);
 
         res.status(201).json(newServerData);
     } catch (error) {
@@ -73,7 +74,8 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
     }
 }
 
-async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[]) {
+
+async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[], isCluster: boolean, showDatabaseInfo: boolean) {
     /*
         Will create a new server data document in serversdatas collection, with the hostname and filters.
         Rest of the fields will be created later when CRON task will run or when refresh API endpoint hit.
@@ -82,6 +84,8 @@ async function createServerDataWithHostnameAndFilters(hostname: string, selected
         { hostname: hostname },
         {
             selectedFilters: selectedFilters,
+            isCluster: isCluster,
+            showDatabaseInfo: showDatabaseInfo,
         },
         { upsert: true, new: true }
     );
@@ -95,7 +99,8 @@ type IUpdateServerMetaBody = {
     selectedFilters: string[],
 }
 
-export const updateServerMeta: RequestHandler<unknown, unknown, IUpdateServerMetaBody, unknown> = async (req, res) => {
+// Will update corresponding server data document as well
+export const updateServer: RequestHandler<unknown, unknown, IUpdateServerMetaBody, unknown> = async (req, res) => {
     const { hostname, selectedFilters } = req.body;
     try {
         await ServersMetaModel.findOneAndUpdate(
@@ -106,7 +111,7 @@ export const updateServerMeta: RequestHandler<unknown, unknown, IUpdateServerMet
         );
 
         // Now updating server data document
-        const updatedServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters);
+        const updatedServerData = await updateServerData(hostname, selectedFilters);
 
         res.status(201).json(updatedServerData);
     } catch (error) {
@@ -114,6 +119,19 @@ export const updateServerMeta: RequestHandler<unknown, unknown, IUpdateServerMet
         res.status(500).json({ error });
     }
 }
+
+async function updateServerData(hostname: string, selectedFilters: string[],) {
+    const updatedDocument = await ServerDataModel.findOneAndUpdate(
+        { hostname: hostname },
+        {
+            selectedFilters: selectedFilters,
+        },
+        { upsert: true, new: true }
+    );
+
+    return updatedDocument;
+}
+
 
 // Deletes both server meta and server data documents
 export const deleteServer: RequestHandler = async (req, res) => {

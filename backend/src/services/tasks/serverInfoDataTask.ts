@@ -26,7 +26,7 @@ export default async function updateServerInfoDataTask(serverMeta: ICreateServer
             { upsert: true, new: true }
         );
     } catch (error) {
-        console.error(`Failed to update data for server ${serverMeta.hostname}:`, error);
+        console.error(`Failed to update server info data for server ${serverMeta.hostname}:`, error);
     }
 }
 

@@ -41,6 +41,8 @@ const serversDataSchema = new Schema({
     databaseStatus: [databaseStatus],
     selectedFilters: { type: [String] }, // for tags
     serverVersion: { type: String, default: "" },
+    isCluster: { type: Boolean, required: true },
+    showDatabaseInfo: { type: Boolean, required: true },
 }, { timestamps: true });
 
 
