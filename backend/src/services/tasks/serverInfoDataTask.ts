@@ -10,10 +10,11 @@ interface ICreateServerMetaBody {
     passwordSSH: string,
 }
 
-
+// For some extra information about server, e.g server version
 export default async function updateServerInfoDataTask(serverMeta: ICreateServerMetaBody) {
     try {
-        const serverVersion = await getServerVersion(serverMeta.hostname, serverMeta.usernameSSH, serverMeta.passwordSSH);
+        const nodename = serverMeta.nodesHostnames.length > 0 ? serverMeta.nodesHostnames[0] : serverMeta.hostname;
+        const serverVersion = await getServerVersion(nodename, serverMeta.usernameSSH, serverMeta.passwordSSH);
         if (serverVersion === "") {
             console.error(`Failed to get server version for ${serverMeta.hostname}`);
             return;
@@ -32,17 +33,17 @@ export default async function updateServerInfoDataTask(serverMeta: ICreateServer
 
 
 async function getServerVersion(
-    hostname: string,
+    nodename: string,
     serverSSHUsername: string,
     serverSSHPassword: string
 ): Promise<string> {
     const command = `rpm -q pss-org-services`;
     try {
-        const output = await executeCommandOnSSH(command, hostname, serverSSHUsername, serverSSHPassword);
+        const output = await executeCommandOnSSH(command, nodename, serverSSHUsername, serverSSHPassword);
         console.log(`rpm -q pss-org-services OUTPUT: ${output}`);
         return extractVersion(output);
     } catch (e) {
-        console.error(`Get pss-org-services version failed for ${hostname}---Error: `, e)
+        console.error(`Get pss-org-services version failed for ${nodename}---Error: `, e)
     }
     return "";
 }

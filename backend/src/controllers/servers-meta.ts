@@ -65,7 +65,7 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
             selectedFilters,
         });
 
-        const newServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters, isCluster, showDatabaseInfo);
+        const newServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters, isCluster, showDatabaseInfo, nodesHostnames);
 
         res.status(201).json(newServerData);
     } catch (error) {
@@ -75,7 +75,7 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
 }
 
 
-async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[], isCluster: boolean, showDatabaseInfo: boolean) {
+async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[], isCluster: boolean, showDatabaseInfo: boolean, nodesHostnames: string[]) {
     /*
         Will create a new server data document in serversdatas collection, with the hostname and filters.
         Rest of the fields will be created later when CRON task will run or when refresh API endpoint hit.
@@ -86,6 +86,7 @@ async function createServerDataWithHostnameAndFilters(hostname: string, selected
             selectedFilters: selectedFilters,
             isCluster: isCluster,
             showDatabaseInfo: showDatabaseInfo,
+            nodesHostnames: nodesHostnames,
         },
         { upsert: true, new: true }
     );

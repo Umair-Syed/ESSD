@@ -11,7 +11,7 @@ import { IoCellular } from "react-icons/io5";
 import { LuRefreshCcw } from "react-icons/lu";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { MdEdit, MdDelete } from "react-icons/md";
-import { Dropdown } from 'flowbite-react';
+import { Dropdown, Tooltip } from 'flowbite-react';
 import styles from './page.module.css';
 import AddServerModal from "@/components/AddServerModal";
 import WarningModal from "@/components/WarningModal";
@@ -64,10 +64,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
   const [showEditServerModal, setShowEditServerModal] = useState(false);
   const [showServerDeleteModal, setShowServerDeleteModal] = useState(false);
 
-  const servicesIndicatorColor = getIndicatorColorFromStatus(isRefreshing, getServicesStatus(serverData.services, serverData.hostname).status);
-  const databaseIndicatorColor = getIndicatorColorFromStatus(isRefreshing, getDatabaseStatus(serverData.showDatabaseInfo, serverData.databaseStatus).status);
-  const memoryIndicatorColor = getIndicatorColorFromStatus(isRefreshing, getMemoryPressureStatus(serverData.memoryPressure, serverData.hostname).status);
-  const diskIndicatorColor = getIndicatorColorFromStatus(isRefreshing, getDiskUsageStatus(serverData.diskUsages, serverData.hostname).status);
+
 
 
   useEffect(() => {
@@ -121,6 +118,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
         className="flex justify-between items-center md:flex-row sm:flex-col cursor-pointer"
         onClick={() => toggleExpand(serverData.hostname)}>
 
+        {/* Hostname, Link, Version */}
         <div className='flex items-baseline'>
           <div className='font-medium text-xl text-gray-600'>{serverData.hostname}</div>
           <a className='text-sm text-gray-400 ml-4 hover:text-blue-500'
@@ -135,6 +133,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
         </div>
 
         <div className='flex items-center text-xl'>
+          {/* Refresh */}
           <button
             className={`mr-4 text-gray-700 w-5 h-5 hover:text-blue-500 ${isRefreshing ? styles.rotate : ''}`}
             onClick={(e) => {
@@ -144,14 +143,16 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
             <LuRefreshCcw />
           </button>
 
-          <div className='flex items-center gap-4 mr-4 border py-2 px-4 rounded-md bg-gray-100'>
-            {/* icons */}
-            {server.showDatabaseInfo && <FaDatabase className={databaseIndicatorColor}/>}
-            <FaHardDrive className={diskIndicatorColor}/>
-            <FaMemory className={memoryIndicatorColor}/>
-            <IoCellular className={servicesIndicatorColor}/>
-          </div>
+          {/* icons */}
+          {!serverData.isCluster &&
+            <StatusIndicators
+              isRefreshing={isRefreshing}
+              serverData={serverData}
+              nodename={serverData.hostname}
+            />
+          }
 
+          {/* More */}
           <div
             onClick={(e) => {
               e.stopPropagation();
@@ -186,6 +187,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
             </Dropdown>
           </div>
 
+          {/* Expand icon */}
           {expandedServer === serverData.hostname ? (
             <IoIosArrowUp className="w-6 h-6" />
           ) : (
@@ -193,7 +195,19 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
           )}
         </div>
       </div>
-
+      {serverData.isCluster && (
+        <div className='mt-4'>
+          {serverData.nodesHostnames.map((nodename) => (
+            <div className='flex justify-between mt-2'>
+              <div className='text-lg text-gray-500'>{nodename}</div>
+              <StatusIndicators
+                isRefreshing={isRefreshing}
+                serverData={serverData}
+                nodename={nodename} />
+            </div>
+          ))}
+        </div>
+      )}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedServer === serverData.hostname ? "max-h-[520px]" : "max-h-0"}`}>
         <div className={`mt-4 pt-4 border-t overflow-y-auto`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
           {/* Display the expanded data here */}
@@ -225,6 +239,49 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
   );
 }
 
+interface IStatusIndicatorsProps {
+  isRefreshing: boolean;
+  serverData: ServerData;
+  nodename: string;
+}
+
+function StatusIndicators({ isRefreshing, serverData, nodename }: IStatusIndicatorsProps) {
+  const servicesStatus = getServicesStatus(serverData.services, nodename).status;
+  const databaseStatus = getDatabaseStatus(serverData.showDatabaseInfo, serverData.databaseStatus).status;
+  const memoryPressureStatus = getMemoryPressureStatus(serverData.memoryPressure, nodename).status;
+  const diskUsageStatus = getDiskUsageStatus(serverData.diskUsages, nodename).status;
+
+  const servicesIndicatorColor = getIndicatorColorFromStatus(isRefreshing, servicesStatus);
+  const databaseIndicatorColor = getIndicatorColorFromStatus(isRefreshing, databaseStatus);
+  const memoryIndicatorColor = getIndicatorColorFromStatus(isRefreshing, memoryPressureStatus);
+  const diskIndicatorColor = getIndicatorColorFromStatus(isRefreshing, diskUsageStatus);
+
+  const servicesTooltipContent = getIndicatorTooltipContent(servicesStatus, "services");
+  const databaseTooltipContent = getIndicatorTooltipContent(databaseStatus, "database");
+  const memoryTooltipContent = getIndicatorTooltipContent(memoryPressureStatus, "memory");
+  const diskTooltipContent = getIndicatorTooltipContent(diskUsageStatus, "disk");
+  
+  return (
+    <div className='flex items-center gap-4 mr-4 border py-2 px-4 rounded-md bg-gray-100'>
+      {serverData.showDatabaseInfo &&
+        <Tooltip content={databaseTooltipContent}>
+          <FaDatabase className={databaseIndicatorColor} />
+        </Tooltip>
+      }
+      <Tooltip content={diskTooltipContent}>
+        <FaHardDrive className={diskIndicatorColor} />
+      </Tooltip>
+      <Tooltip content={memoryTooltipContent}>
+        <FaMemory className={memoryIndicatorColor} />
+      </Tooltip>
+      <Tooltip content={servicesTooltipContent}>
+        <IoCellular className={servicesIndicatorColor} />
+      </Tooltip>
+    </div>
+  );
+}
+
+
 function getIndicatorColorFromStatus(isRefreshing: boolean, status: string) {
   if (isRefreshing) {
     return "text-gray-400";
@@ -241,3 +298,60 @@ function getIndicatorColorFromStatus(isRefreshing: boolean, status: string) {
       return "text-gray-400";
   }
 }
+
+function getIndicatorTooltipContent(status: string, about: string) {
+  if  (about === "services") {
+    switch (status) {
+      case "UP":
+        return "All services are up and running";
+      case "DOWN":
+        return "Services are down";
+      case "WARNING":
+        return "Some services are down";
+      case "UNKNOWN":
+        return "Couldn't fetch services status";
+      default:
+        return "Unknown";
+    }
+  } else if (about === "database") {
+    switch (status) {
+      case "UP":
+        return "All databases are online";
+      case "DOWN":
+        return "Databases are down";
+      case "WARNING":
+        return "Some databases are not online";
+      case "UNKNOWN":
+        return "Couldn't fetch databases status";
+      default:
+        return "Unknown";
+    }
+  } else if (about === "memory") {
+    switch (status) {
+      case "UP":
+        return "Memory usage is normal.";
+      case "DOWN":
+        return "Memory usage is critically high.";
+      case "WARNING":
+        return "Memory usage is high.";
+      case "UNKNOWN":
+        return "Couldn't fetch memory status";
+      default:
+        return "Memory status is unknown.";
+    }
+  } else if (about === "disk") {
+    switch (status) {
+      case "UP":
+        return "Disk usage is normal.";
+      case "DOWN":
+        return "Disk usage is critically high or disk not responding!";
+      case "WARNING":
+        return "Disk usage is high.";
+      case "UNKNOWN":
+        return "Couldn't fetch disk status";
+      default:
+        return "Disk status is unknown.";
+    }
+  }  
+}
+

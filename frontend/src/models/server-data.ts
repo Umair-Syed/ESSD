@@ -40,6 +40,7 @@ export interface ServerData {
     serverVersion: string;
     isCluster: boolean;
     showDatabaseInfo: boolean;
+    nodesHostnames: string[];
     // Timestamps
     createdAt?: Date;
     updatedAt?: Date;

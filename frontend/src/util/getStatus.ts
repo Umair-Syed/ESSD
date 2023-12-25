@@ -43,7 +43,7 @@ export function getServicesStatus(services: models.IServiceStatus[], nodename: s
         status.status = STATUS_DOWN;
         return status;
     }
-    
+
     return status;
 }
 
@@ -58,11 +58,19 @@ export function getDatabaseStatus(showDatabaseInfo: boolean, datbaseStatus: mode
         return status;
     }
 
+    let databaseDownCount = 0;
     for (let db of datbaseStatus) {
         if (db.status.toUpperCase() !== "ONLINE") {
-            status.status = STATUS_DOWN;
-            return status;
+            databaseDownCount++;
         }
+    }
+
+    if (databaseDownCount !== 0 && databaseDownCount !== datbaseStatus.length) {
+        status.status = STATUS_WARNING;
+        return status;
+    } else if (databaseDownCount === datbaseStatus.length) {
+        status.status = STATUS_DOWN;
+        return status;
     }
    
     return status;
@@ -134,22 +142,30 @@ export function getMemoryPressureStatus(memoryPressures: models.IMemoryPressureF
                 && totalMemory === 0
                 && usedSwapMemory[usedSwapMemory.length - 1] === 0
                 && totalSwapMemory === 0) {
+                    
                 status.status = STATUS_UNKNOWN;
                 return status;
             }
 
-            // if swap usage is more than 98% and memory usage is more than 95%, => Warning
-            if (usedSwapMemory[usedSwapMemory.length - 1] / totalSwapMemory > 0.98
-                && usedMemory[usedMemory.length - 1] / totalMemory > 0.95) {
-                status.status = STATUS_WARNING;
-                return status;
-            }
+            const memoryUsage = usedMemory[usedMemory.length - 1] / totalMemory;
+            const swapUsage = usedSwapMemory[usedSwapMemory.length - 1] / totalSwapMemory;
+
+            console.log(`Node: ${nodename} memoryUsage: ${memoryUsage}, swapUsage: ${swapUsage}`);
+
             // if swap usage is more than 98% and memory usage is more than 98%, => Down
-            if (usedSwapMemory[usedSwapMemory.length - 1] / totalSwapMemory > 0.98
-                && usedMemory[usedMemory.length - 1] / totalMemory > 0.98) {
+            if (swapUsage > 0.98
+                && memoryUsage > 0.98) {
                 status.status = STATUS_DOWN;
                 return status;
             }
+
+            // if swap usage is more than 98% and memory usage is more than 95%, => Warning
+            if (swapUsage > 0.98
+                && memoryUsage > 0.95) {
+                status.status = STATUS_WARNING;
+                return status;
+            }
+            
         }
     }
 

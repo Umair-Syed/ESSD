@@ -43,6 +43,7 @@ const serversDataSchema = new Schema({
     serverVersion: { type: String, default: "" },
     isCluster: { type: Boolean, required: true },
     showDatabaseInfo: { type: Boolean, required: true },
+    nodesHostnames: { type: [String] },
 }, { timestamps: true });
 
 
