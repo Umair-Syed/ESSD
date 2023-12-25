@@ -1,4 +1,4 @@
-interface IServiceStatus {
+export interface IServiceStatus {
     name: string; // Name of the service
     nodes: Array<{
         nodeName: string;
@@ -6,13 +6,13 @@ interface IServiceStatus {
     }>;
 }
 
-interface IDiskUsageForNode {
+export interface IDiskUsageForNode {
     nodeName: string;
     past20MinUsage: number[];
     capacity: number;
 }
 
-interface IMemoryPressureForNode {
+export interface IMemoryPressureForNode {
     nodeName: string;
     memory: {
         total: number;
@@ -24,7 +24,7 @@ interface IMemoryPressureForNode {
     };
 }
 
-interface IDatabaseStatus {
+export interface IDatabaseStatus {
     databaseName: string;
     status: string;
 }
@@ -38,6 +38,8 @@ export interface ServerData {
     databaseStatus: IDatabaseStatus[];
     selectedFilters: string[]; // For tags
     serverVersion: string;
+    isCluster: boolean;
+    showDatabaseInfo: boolean;
     // Timestamps
     createdAt?: Date;
     updatedAt?: Date;
