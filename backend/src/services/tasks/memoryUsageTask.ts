@@ -33,7 +33,8 @@ interface CurrentMemoryPressureData {
     swap: {
         total: number,
         used: number,
-    },
+    }
+    timestamp: number
 }
 
 async function updateOrCreateMemoryPressureData(serverHostname: string, nodeHostname: string, memoryPressureData: CurrentMemoryPressureData) {
@@ -53,7 +54,8 @@ async function updateOrCreateMemoryPressureData(serverHostname: string, nodeHost
                     swap: {
                         total: memoryPressureData.swap.total,
                         used: [memoryPressureData.swap.used]
-                    }
+                    },
+                    timestamps: [memoryPressureData.timestamp],
                 }],
             });
             await server.save();
@@ -70,11 +72,13 @@ async function updateOrCreateMemoryPressureData(serverHostname: string, nodeHost
                     swap: {
                         total: memoryPressureData.swap.total,
                         used: [memoryPressureData.swap.used]
-                    }
+                    },
+                    timestamps: [memoryPressureData.timestamp],
                 });
             } else if (memoryPressure.memory && memoryPressure.swap) { // if memoryPressure exists, then memory and swap will also exist, so this check is only for Lint error
                 memoryPressure.memory.used.push(memoryPressureData.memory.used);
                 memoryPressure.swap.used.push(memoryPressureData.swap.used);
+                memoryPressure.timestamps.push(memoryPressureData.timestamp);
 
                 // Keep only the last 10 elements for used memory and used swap
                 if (memoryPressure.memory.used.length > 10) {
@@ -83,8 +87,15 @@ async function updateOrCreateMemoryPressureData(serverHostname: string, nodeHost
                 if (memoryPressure.swap.used.length > 10) {
                     memoryPressure.swap.used.shift();
                 }
-                memoryPressure.memory.total = memoryPressureData.memory.total;
-                memoryPressure.swap.total = memoryPressureData.swap.total;
+                if (memoryPressure.timestamps.length > 10) {
+                    memoryPressure.timestamps.shift();
+                }
+                if ((memoryPressureData.memory.used !== -1 && memoryPressureData.swap.used !== -1)
+                    && (memoryPressure.memory.total !== memoryPressureData.memory.total || memoryPressure.swap.total !== memoryPressureData.swap.total)) {
+                    memoryPressure.memory.total = memoryPressureData.memory.total;
+                    memoryPressure.swap.total = memoryPressureData.swap.total;
+                }
+
             }
             await server.save();
         }
@@ -109,8 +120,9 @@ async function getMemoryPressure(
         console.error(`GetMemoryPressure failed for ${hostname}---Error: `, e)
     }
     return {
-        memory: { total: 0, used: 0 },
-        swap: { total: 0, used: 0 }
+        memory: { total: 0, used: -1 },
+        swap: { total: 0, used: -1 },
+        timestamp: Date.now(),
     };
 }
 
@@ -135,7 +147,8 @@ function parseMemoryPressureData(data: string): CurrentMemoryPressureData {
     };
 
     return {
-        memory: memoryData ? parseLine(memoryData) : { total: 0, used: 0 },
-        swap: swapData ? parseLine(swapData) : { total: 0, used: 0 },
+        memory: memoryData ? parseLine(memoryData) : { total: 0, used: -1 },
+        swap: swapData ? parseLine(swapData) : { total: 0, used: -1 },
+        timestamp: Date.now(),
     };
 }

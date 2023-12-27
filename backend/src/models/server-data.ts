@@ -26,6 +26,7 @@ const memoryPressureForNode = new Schema({
         total: Number,
         used: [Number],
     },
+    timestamps: [Number]
 },{ _id: false });
 
 const databaseStatus = new Schema({

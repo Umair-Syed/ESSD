@@ -15,6 +15,7 @@ import { Dropdown, Tooltip } from 'flowbite-react';
 import styles from './page.module.css';
 import AddServerModal from "@/components/AddServerModal";
 import WarningModal from "@/components/WarningModal";
+import MemoryChart from "@/components/MemoryChart";
 import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus } from "@/util/getStatus";
 
 export default function Home() {
@@ -43,9 +44,11 @@ export default function Home() {
 
   return (
     <div className="p-4 xl:mx-64 lg:mx-32 md:mx-12">
-      {serversData.map((server) => (
+      {serversData.length > 0 ? serversData.map((server) => (
         <RowItem key={server.hostname} server={server} setServersData={setServersData} serversData={serversData} toggleExpand={toggleExpand} expandedServer={expandedServer} />
-      ))}
+      )) : (
+        <div className="text-center text-gray-500 font-bold text-xl">No servers found</div>
+      )}
     </div>
   );
 }
@@ -211,7 +214,15 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedServer === serverData.hostname ? "max-h-[520px]" : "max-h-0"}`}>
         <div className={`mt-4 pt-4 border-t overflow-y-auto`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
           {/* Display the expanded data here */}
-          <pre>{JSON.stringify(serverData, null, 2)}</pre>
+          <div className='flex'>
+            <div style={{ width: '500px', }}>
+              <MemoryChart {...serverData.memoryPressure[0]}/>
+            </div>
+            <div style={{ width: '500px', }}>
+              {/* <MemoryChart /> */}
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -260,7 +271,7 @@ function StatusIndicators({ isRefreshing, serverData, nodename }: IStatusIndicat
   const databaseTooltipContent = getIndicatorTooltipContent(databaseStatus, "database");
   const memoryTooltipContent = getIndicatorTooltipContent(memoryPressureStatus, "memory");
   const diskTooltipContent = getIndicatorTooltipContent(diskUsageStatus, "disk");
-  
+
   return (
     <div className='flex items-center gap-4 mr-4 border py-2 px-4 rounded-md bg-gray-100'>
       {serverData.showDatabaseInfo &&
@@ -300,7 +311,7 @@ function getIndicatorColorFromStatus(isRefreshing: boolean, status: string) {
 }
 
 function getIndicatorTooltipContent(status: string, about: string) {
-  if  (about === "services") {
+  if (about === "services") {
     switch (status) {
       case "UP":
         return "All services are up and running";
@@ -352,6 +363,6 @@ function getIndicatorTooltipContent(status: string, about: string) {
       default:
         return "Disk status is unknown.";
     }
-  }  
+  }
 }
 

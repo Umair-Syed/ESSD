@@ -137,11 +137,9 @@ export function getMemoryPressureStatus(memoryPressures: models.IMemoryPressureF
                 status.status = STATUS_UNKNOWN;
                 return status;
             }
-            // From server side, if we fail to get memory usage, we are returning 0.
-            if (usedMemory[usedMemory.length - 1] === 0 
-                && totalMemory === 0
-                && usedSwapMemory[usedSwapMemory.length - 1] === 0
-                && totalSwapMemory === 0) {
+            // From server side, if we fail to get memory usage, we are returning -1.
+            if (usedMemory[usedMemory.length - 1] === -1
+                && usedSwapMemory[usedSwapMemory.length - 1] === -1) {
                     
                 status.status = STATUS_UNKNOWN;
                 return status;
@@ -149,8 +147,6 @@ export function getMemoryPressureStatus(memoryPressures: models.IMemoryPressureF
 
             const memoryUsage = usedMemory[usedMemory.length - 1] / totalMemory;
             const swapUsage = usedSwapMemory[usedSwapMemory.length - 1] / totalSwapMemory;
-
-            console.log(`Node: ${nodename} memoryUsage: ${memoryUsage}, swapUsage: ${swapUsage}`);
 
             // if swap usage is more than 98% and memory usage is more than 98%, => Down
             if (swapUsage > 0.98

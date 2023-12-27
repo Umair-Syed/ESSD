@@ -22,6 +22,7 @@ export interface IMemoryPressureForNode {
         total: number;
         used: number[];
     };
+    timestamps: number[];
 }
 
 export interface IDatabaseStatus {
