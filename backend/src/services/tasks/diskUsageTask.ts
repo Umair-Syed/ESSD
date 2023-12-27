@@ -28,6 +28,7 @@ export default async function updateDiskUsageDataTask(serverMeta: ICreateServerM
 interface CurrentDiskUsage {
     used: number,
     capacity: number,
+    timestamp: number
 }
 
 async function updateOrCreateDiskUsageData(serverHostname: string, nodeHostname: string, diskUsageData: CurrentDiskUsage) {
@@ -39,7 +40,12 @@ async function updateOrCreateDiskUsageData(serverHostname: string, nodeHostname:
             // If server does not exist, create it with the initial data
             server = new ServerDataModel({
                 hostname: serverHostname,
-                diskUsages: [{ nodeName: nodeHostname, past20MinUsage: [diskUsageData.used], capacity: diskUsageData.capacity }],
+                diskUsages: [{
+                    nodeName: nodeHostname, 
+                    past20MinUsage: [diskUsageData.used], 
+                    capacity: diskUsageData.capacity,
+                    timestamps: [diskUsageData.timestamp], 
+                }],
             });
             await server.save();
         } else {
@@ -48,14 +54,27 @@ async function updateOrCreateDiskUsageData(serverHostname: string, nodeHostname:
 
             if (!diskUsage) {
                 // If diskUsage element does not exist, add it
-                server.diskUsages.push({ nodeName: nodeHostname, past20MinUsage: [diskUsageData.used], capacity: diskUsageData.capacity });
+                server.diskUsages.push({ 
+                    nodeName: nodeHostname, 
+                    past20MinUsage: [diskUsageData.used], 
+                    capacity: diskUsageData.capacity,
+                    timestamps: [diskUsageData.timestamp], 
+                });
             } else {
                 // If diskUsage element exists, update it
                 diskUsage.past20MinUsage.push(diskUsageData.used);
+                diskUsage.timestamps.push(diskUsageData.timestamp);
+
                 if (diskUsage.past20MinUsage.length > 10) {
                     diskUsage.past20MinUsage.shift(); // Keep only the last 10 elements
                 }
-                diskUsage.capacity = diskUsageData.capacity;
+                if (diskUsage.timestamps.length > 10) {
+                    diskUsage.timestamps.shift();
+                }
+
+                if (diskUsageData.used !== -1 && diskUsage.capacity !== diskUsageData.capacity) {
+                    diskUsage.capacity = diskUsageData.capacity;
+                }
             }
             await server.save();
         }
@@ -79,7 +98,7 @@ async function getDiskUsage(
     } catch (e) {
         console.error(`GetDiskUsage failed for ${hostname}---Error: `, e)
     }
-    return { used: 0, capacity: 0 };
+    return { used: -1, capacity: 0, timestamp: Date.now() };
 }
 
 function parseDiskUsageData(data: string): CurrentDiskUsage {
@@ -107,9 +126,10 @@ function extractVolumeData(output: string, volume: string): CurrentDiskUsage {
             // Expecting Size to be in first column and Used in second column
             return {
                 capacity: parseSizeToGB(parts[1]), // Input format example: 98G
-                used: parseSizeToGB(parts[2])
+                used: parseSizeToGB(parts[2]),
+                timestamp: Date.now()
             };
         }
     }
-    return { used: 0, capacity: 0 };
+    return { used: -1, capacity: 0, timestamp: Date.now() };
 }

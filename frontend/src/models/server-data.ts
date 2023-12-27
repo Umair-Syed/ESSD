@@ -10,6 +10,7 @@ export interface IDiskUsageForNode {
     nodeName: string;
     past20MinUsage: number[];
     capacity: number;
+    timestamps: number[];
 }
 
 export interface IMemoryPressureForNode {

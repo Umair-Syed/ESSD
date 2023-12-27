@@ -16,6 +16,7 @@ import styles from './page.module.css';
 import AddServerModal from "@/components/AddServerModal";
 import WarningModal from "@/components/WarningModal";
 import MemoryChart from "@/components/MemoryChart";
+import DiskChart from "@/components/DiskChart";
 import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus } from "@/util/getStatus";
 
 export default function Home() {
@@ -211,19 +212,18 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
           ))}
         </div>
       )}
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedServer === serverData.hostname ? "max-h-[520px]" : "max-h-0"}`}>
-        <div className={`mt-4 pt-4 border-t overflow-y-auto`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedServer === serverData.hostname ? "h-[520px]" : "h-0"}`}>
+        {expandedServer === serverData.hostname && <div className={`mt-4 pt-4 border-t overflow-y-auto`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
           {/* Display the expanded data here */}
           <div className='flex'>
             <div style={{ width: '500px', }}>
-              <MemoryChart {...serverData.memoryPressure[0]}/>
+              <DiskChart {...serverData.diskUsages[0]} />
             </div>
-            <div style={{ width: '500px', }}>
-              {/* <MemoryChart /> */}
+            <div style={{ width: '500px', }} className='ml-6'>
+              <MemoryChart {...serverData.memoryPressure[0]} />
             </div>
           </div>
-
-        </div>
+        </div>}
       </div>
 
       {showEditServerModal && (

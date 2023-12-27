@@ -13,7 +13,8 @@ const serviceStatusSchema = new Schema({
 const diskUsageForNode = new Schema({
     nodeName: String,
     past20MinUsage: [Number],
-    capacity: Number
+    capacity: Number,
+    timestamps: [Number]
 },{ _id: false });
 
 const memoryPressureForNode = new Schema({
