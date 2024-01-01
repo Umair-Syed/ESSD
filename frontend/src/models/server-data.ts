@@ -34,6 +34,7 @@ export interface IDatabaseStatus {
 export interface ServerData {
     _id: string;
     hostname: string;
+    alias: string;
     services: IServiceStatus[];
     diskUsages: IDiskUsageForNode[]; // Will have only one element for non-cluster servers
     memoryPressure: IMemoryPressureForNode[]; // Will have only one element for non-cluster servers

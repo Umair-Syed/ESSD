@@ -24,7 +24,6 @@ ChartJS.register(
 );
 
 const preprocessData = (dataArray: number[]) => dataArray.map(value => {
-    console.log(`Disk datapoint: ${value}`);
     if (value === -1) return null; // Helps to create a break in the line
     return Number(value); 
   });

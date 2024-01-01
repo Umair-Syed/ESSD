@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { ServersMetaModel } from "../models/server-meta";
 import ServerDataModel from "../models/server-data";
-
+import { getAliasHostname } from "../util";
 
 export const getServersMeta: RequestHandler = async (req, res) => {
     try {
@@ -65,7 +65,7 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
             selectedFilters,
         });
 
-        const newServerData = await createServerDataWithHostnameAndFilters(hostname, selectedFilters, isCluster, showDatabaseInfo, nodesHostnames);
+        const newServerData = await createServerDataWithInitialData(hostname, selectedFilters, isCluster, showDatabaseInfo, nodesHostnames, usernameSSH, passwordSSH);
 
         res.status(201).json(newServerData);
     } catch (error) {
@@ -75,11 +75,23 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
 }
 
 
-async function createServerDataWithHostnameAndFilters(hostname: string, selectedFilters: string[], isCluster: boolean, showDatabaseInfo: boolean, nodesHostnames: string[]) {
+async function createServerDataWithInitialData(
+    hostname: string,
+    selectedFilters: string[],
+    isCluster: boolean,
+    showDatabaseInfo: boolean,
+    nodesHostnames: string[],
+    usernameSSH: string,
+    passwordSSH: string,
+) {
     /*
+        CANNOT TAKE TIME HERE. Have to SEND BACK THE RESPONSE with initial data ASAP.
         Will create a new server data document in serversdatas collection, with the hostname and filters.
         Rest of the fields will be created later when CRON task will run or when refresh API endpoint hit.
     */
+
+    const alias = await getAliasHostname(hostname, usernameSSH, passwordSSH); // timeout only 1 second
+
     const updatedDocument = await ServerDataModel.findOneAndUpdate(
         { hostname: hostname },
         {
@@ -87,6 +99,7 @@ async function createServerDataWithHostnameAndFilters(hostname: string, selected
             isCluster: isCluster,
             showDatabaseInfo: showDatabaseInfo,
             nodesHostnames: nodesHostnames,
+            alias: alias,
         },
         { upsert: true, new: true }
     );

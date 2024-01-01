@@ -1,7 +1,7 @@
 import ssh from 'ssh2';
 
 
-export function executeCommandOnSSH(command: string, host: string, username: string, password: string): Promise<string> {
+export function executeCommandOnSSH(command: string, host: string, username: string, password: string, timeout = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
     const conn = new ssh.Client();
     conn.on('ready', () => {
@@ -31,7 +31,7 @@ export function executeCommandOnSSH(command: string, host: string, username: str
       port: 22,
       username: username,
       password: password,
-      readyTimeout: 5000, // 5 seconds timeout
+      readyTimeout: timeout, // 5 seconds timeout
     });
   });
 }
@@ -55,4 +55,21 @@ export function parseSizeToGB(sizeStr: string): number {
     default:
       return 0; // or appropriate default value or error handling
   }
+}
+
+
+export async function getAliasHostname(
+  hostname: string,
+  serverSSHUsername: string,
+  serverSSHPassword: string
+): Promise<string> {
+  const command = `hostname`;
+  const timeout = 1000;
+  try {
+      const output = await executeCommandOnSSH(command, hostname, serverSSHUsername, serverSSHPassword, timeout);
+      return output.trim();
+  } catch (e) {
+      console.error(`Get pss-org-services version failed for ${hostname}---Error: `, e)
+  }
+  return "";
 }

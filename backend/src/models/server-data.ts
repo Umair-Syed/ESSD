@@ -37,6 +37,7 @@ const databaseStatus = new Schema({
 
 const serversDataSchema = new Schema({
     hostname: { type: String, required: true },
+    alias: { type: String, default: "" },
     services: [serviceStatusSchema],
     diskUsages: [diskUsageForNode], // will have only one element for non-cluster servers
     memoryPressure: [memoryPressureForNode], // will have only one element for non-cluster servers

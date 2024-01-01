@@ -69,8 +69,6 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
   const [showServerDeleteModal, setShowServerDeleteModal] = useState(false);
 
 
-
-
   useEffect(() => {
     // server.createdAt is within last 5mins (usually cron job interval) and is empty, then refresh data for it. Refreshing because it's a newly added server and new servers don't have all the data.
     if (server.createdAt) {
@@ -123,19 +121,24 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
         onClick={() => toggleExpand(serverData.hostname)}>
 
         {/* Hostname, Link, Version */}
-        <div className='flex items-baseline'>
-          <div className='font-medium text-xl text-gray-600'>{serverData.hostname}</div>
-          <a className='text-sm text-gray-400 ml-4 hover:text-blue-500'
-            href={`https://${server.hostname}:8443`}
-            target="_blank"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}>
-            <FaExternalLinkAlt />
-          </a>
-          <div className='text-sm text-gray-400 font-light ml-4'>{serverData.serverVersion}</div>
-        </div>
+        <div>
+          <div className='flex items-baseline'>
+            <div className='font-medium text-xl text-gray-600'>{serverData.hostname}</div>
+            <a className='text-sm text-gray-400 ml-4 hover:text-blue-500'
+              href={`https://${server.hostname}:8443`}
+              target="_blank"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}>
+              <FaExternalLinkAlt />
+            </a>
+            <div className='text-sm text-gray-400 font-light ml-4'>{serverData.serverVersion}</div>
+          </div>
 
+          {serverData.alias !== "" && (
+            <div className='text-sm text-gray-400'>{serverData.alias}</div>
+          )}
+        </div>
         <div className='flex items-center text-xl'>
           {/* Refresh */}
           <button
@@ -213,17 +216,49 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
         </div>
       )}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedServer === serverData.hostname ? "h-[520px]" : "h-0"}`}>
-        {expandedServer === serverData.hostname && <div className={`mt-4 pt-4 border-t overflow-y-auto`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
-          {/* Display the expanded data here */}
-          <div className='flex'>
-            <div style={{ width: '500px', }}>
-              <DiskChart {...serverData.diskUsages[0]} />
+        {expandedServer === serverData.hostname &&
+          <div className={`mt-4 pt-4 border-t overflow-y-auto pr-4`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
+            {/* Display the expanded data here */}
+            {/* Disk and Memory status */}
+            <div className='border-2 rounded-md pb-2'>
+              <div className='flex justify-between bg-gray-200 px-2 py-2'>
+                <h1 className='text-gray-600'>Disk and Memory usage</h1>
+                <div>
+                  <DiskAndMemoryIndicator serverData={serverData} nodename={serverData.hostname} />
+                </div>
+              </div>
+              <div className='flex mt-2'>
+                <div style={{ width: '500px', }}>
+                  <DiskChart {...serverData.diskUsages[0]} />
+                </div>
+                <div style={{ width: '500px', }} className='ml-6'>
+                  <MemoryChart {...serverData.memoryPressure[0]} />
+                </div>
+              </div>
             </div>
-            <div style={{ width: '500px', }} className='ml-6'>
-              <MemoryChart {...serverData.memoryPressure[0]} />
-            </div>
+            {/* Databases status */}
+            {serverData.showDatabaseInfo &&
+              <div className='border-2 rounded-md pb-2 mt-8'>
+                <div className='flex justify-between bg-gray-200 px-2 py-2'>
+                  <h1 className='text-gray-600'>Database status</h1>
+                  <div>
+                    <DatabaseStatusIndicator serverData={serverData} nodename={serverData.hostname} />
+                  </div>
+                </div>
+                <div className='mt-4'>
+                  {serverData.databaseStatus.map((database) => (
+                    <div key={database.databaseName} className='flex justify-between px-4'>
+                      <div className='text-lg text-gray-700 mb-2'>{database.databaseName}</div>
+                      <div className='text-sm text-green-600 font-bold'>{database.status}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }
+            {/* Services status */}
+            <ServicesDetails serverData={serverData} nodename={serverData.hostname} />
           </div>
-        </div>}
+        }
       </div>
 
       {showEditServerModal && (
@@ -257,15 +292,15 @@ interface IStatusIndicatorsProps {
 }
 
 function StatusIndicators({ isRefreshing, serverData, nodename }: IStatusIndicatorsProps) {
-  const servicesStatus = getServicesStatus(serverData.services, nodename).status;
+  const servicesStatus = getServicesStatus(serverData.services, nodename, serverData.alias).status;
   const databaseStatus = getDatabaseStatus(serverData.showDatabaseInfo, serverData.databaseStatus).status;
   const memoryPressureStatus = getMemoryPressureStatus(serverData.memoryPressure, nodename).status;
   const diskUsageStatus = getDiskUsageStatus(serverData.diskUsages, nodename).status;
 
-  const servicesIndicatorColor = getIndicatorColorFromStatus(isRefreshing, servicesStatus);
-  const databaseIndicatorColor = getIndicatorColorFromStatus(isRefreshing, databaseStatus);
-  const memoryIndicatorColor = getIndicatorColorFromStatus(isRefreshing, memoryPressureStatus);
-  const diskIndicatorColor = getIndicatorColorFromStatus(isRefreshing, diskUsageStatus);
+  const servicesIndicatorColor = getIndicatorColorFromStatus(servicesStatus, isRefreshing);
+  const databaseIndicatorColor = getIndicatorColorFromStatus(databaseStatus, isRefreshing);
+  const memoryIndicatorColor = getIndicatorColorFromStatus(memoryPressureStatus, isRefreshing);
+  const diskIndicatorColor = getIndicatorColorFromStatus(diskUsageStatus, isRefreshing);
 
   const servicesTooltipContent = getIndicatorTooltipContent(servicesStatus, "services");
   const databaseTooltipContent = getIndicatorTooltipContent(databaseStatus, "database");
@@ -293,7 +328,7 @@ function StatusIndicators({ isRefreshing, serverData, nodename }: IStatusIndicat
 }
 
 
-function getIndicatorColorFromStatus(isRefreshing: boolean, status: string) {
+function getIndicatorColorFromStatus(status: string, isRefreshing?: boolean) {
   if (isRefreshing) {
     return "text-gray-400";
   }
@@ -366,3 +401,94 @@ function getIndicatorTooltipContent(status: string, about: string) {
   }
 }
 
+interface IIndividualStatusIndicatorProps {
+  serverData: ServerData;
+  nodename: string;
+}
+
+function DiskAndMemoryIndicator({ serverData, nodename }: IIndividualStatusIndicatorProps) {
+  const memoryPressureStatus = getMemoryPressureStatus(serverData.memoryPressure, nodename).status;
+  const diskUsageStatus = getDiskUsageStatus(serverData.diskUsages, nodename).status;
+
+  const memoryIndicatorColor = getIndicatorColorFromStatus(memoryPressureStatus);
+  const diskIndicatorColor = getIndicatorColorFromStatus(diskUsageStatus);
+
+  return (
+    <div className='flex gap-4 text-lg mr-2'>
+      <FaHardDrive className={diskIndicatorColor} />
+      <FaMemory className={memoryIndicatorColor} />
+    </div>
+  );
+}
+
+function DatabaseStatusIndicator({ serverData, nodename }: IIndividualStatusIndicatorProps) {
+  const databaseStatus = getDatabaseStatus(serverData.showDatabaseInfo, serverData.databaseStatus).status;
+
+  const databaseIndicatorColor = getIndicatorColorFromStatus(databaseStatus);
+
+  return (
+    <div className='text-lg mr-2'>
+      <FaDatabase className={databaseIndicatorColor} />
+    </div>
+  );
+}
+
+function ServicesStatusIndicator({ serverData, nodename }: IIndividualStatusIndicatorProps) {
+  const servicesStatus = getServicesStatus(serverData.services, nodename, serverData.alias).status;
+
+  const servicesIndicatorColor = getIndicatorColorFromStatus(servicesStatus);
+
+  return (
+    <div className='text-lg mr-2'>
+      <IoCellular className={servicesIndicatorColor} />
+    </div>
+  );
+}
+
+
+interface IServicesDetailsProps {
+  serverData: ServerData;
+  nodename: string;
+}
+
+function ServicesDetails({ serverData, nodename }: IServicesDetailsProps) {
+  const couldntFetchServices = serverData.services.length === 0;
+  const servicesStatusArray: { name: string, status: "UP" | "DOWN" }[] = [];
+  if (!couldntFetchServices) {
+    for (let service of serverData.services) {
+      if (service.nodes.length === 0) {
+        // If there are no nodes data, the service is down
+        servicesStatusArray.push({ name: service.name, status: "DOWN" });
+      } else {
+        for (let node of service.nodes) {
+          if ((node.nodeName === nodename || node.nodeName === serverData.alias) && node.status.toUpperCase() === "DOWN") {
+            servicesStatusArray.push({ name: service.name, status: "DOWN" });
+          } else if ((node.nodeName === nodename || node.nodeName === serverData.alias) && node.status.toUpperCase() === "UP") {
+            servicesStatusArray.push({ name: service.name, status: "UP" });
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`nodename: ${nodename} servicesStatusArray: ${JSON.stringify(servicesStatusArray)}`);
+  return (
+    <div className='border-2 rounded-md pb-2 mt-8 mb-8'>
+      <div className='flex justify-between bg-gray-200 px-2 py-2'>
+        <h1 className='text-gray-600'>Services Status</h1>
+        <div>
+          <ServicesStatusIndicator serverData={serverData} nodename={serverData.hostname} />
+        </div>
+      </div>
+      <div className='mt-4'>
+        {couldntFetchServices ? <div>Couldn't fetch services status</div> :
+          servicesStatusArray.map((service) => (
+            <div key={service.name} className='flex justify-between px-4'>
+              <div className='text-lg text-gray-700 mb-2'>{service.name}</div>
+              <div className='text-sm text-green-600 font-bold'>{service.status}</div>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}

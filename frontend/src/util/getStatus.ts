@@ -10,7 +10,7 @@ interface IStatus {
     status: "UP" | "DOWN" | "WARNING" | "UNKNOWN"; // UNKNOWN is for example when can't get disk usage data, so can't determine if disk usage is high or not.
 }
 
-export function getServicesStatus(services: models.IServiceStatus[], nodename: string): IStatus {
+export function getServicesStatus(services: models.IServiceStatus[], nodename: string, alais: string): IStatus {
     let status: IStatus = {
         status: STATUS_UP
     };
@@ -28,7 +28,7 @@ export function getServicesStatus(services: models.IServiceStatus[], nodename: s
             downServices.push(service.name);
         } else {
             for (let node of service.nodes) {
-                if (node.nodeName === nodename && node.status.toUpperCase() === STATUS_DOWN) {
+                if ((node.nodeName === nodename || node.nodeName === alais) && node.status.toUpperCase() === STATUS_DOWN) {
                     servicesDownCount++;
                     downServices.push(service.name);
                 }
@@ -95,17 +95,17 @@ export function getDiskUsageStatus(diskUsages: models.IDiskUsageForNode[], noden
                 status.status = STATUS_UNKNOWN;
                 return status;
             }
-            // From server side, if we fail to get disk usage, we are returning 0.
-            if (past20MinUsage[past20MinUsage.length - 1] === 0 && capacity === 0) {
+            // From server side, if we fail to get disk usage, we are returning -1.
+            if (past20MinUsage[past20MinUsage.length - 1] === -1) {
                 status.status = STATUS_UNKNOWN;
                 return status;
             }
-            if (past20MinUsage[past20MinUsage.length - 1] / capacity > 0.98) {
+            if ((past20MinUsage[past20MinUsage.length - 1] / capacity) > 0.98) {
                 // if disk usage is more than 98%, we consider it as down.
                 status.status = STATUS_DOWN;
                 return status;
             }
-            if (past20MinUsage[past20MinUsage.length - 1] / capacity > 0.9) {
+            if ((past20MinUsage[past20MinUsage.length - 1] / capacity) > 0.9) {
                 // if disk usage is more than 90%, we consider it as warning.
                 status.status = STATUS_WARNING;
                 return status;
