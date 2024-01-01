@@ -96,7 +96,11 @@ async function createServerDataWithInitialData(
         Rest of the fields will be created later when CRON task will run or when refresh API endpoint hit.
     */
 
-    const alias = await getAliasHostname(hostname, usernameSSH, passwordSSH); // timeout only 1 second
+    
+    let alias = "";
+    if (!isCluster) {
+        alias = await getAliasHostname(hostname, usernameSSH, passwordSSH); // timeout only 1 second
+    }   
 
     const updatedDocument = await ServerDataModel.findOneAndUpdate(
         { hostname: hostname },
