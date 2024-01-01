@@ -49,25 +49,31 @@ export const createServerMeta: RequestHandler<unknown, unknown, ICreateServerMet
     } = req.body;
 
     try {
-        await ServersMetaModel.create({
-            hostname,
-            isCluster,
-            nodesHostnames, // will be empty if isCluster is false
-            userName2443,
-            password2443,
-            usernameSSH,
-            passwordSSH,
-            showDatabaseInfo,
-            databaseServerHost, // will be empty if showDatabaseInfo is false
-            databaseUsername, // will be empty if showDatabaseInfo is false
-            databasePassword, // will be empty if showDatabaseInfo is false
-            selectedDatabases, // will be empty if showDatabaseInfo is false
-            selectedFilters,
-        });
 
-        const newServerData = await createServerDataWithInitialData(hostname, selectedFilters, isCluster, showDatabaseInfo, nodesHostnames, usernameSSH, passwordSSH);
-
-        res.status(201).json(newServerData);
+        const existingServer = await ServersMetaModel.findOne({ hostname });
+        if (existingServer) {
+            return res.status(409).json({ message: "Server with this hostname already exists." });
+        } else {
+            await ServersMetaModel.create({
+                hostname,
+                isCluster,
+                nodesHostnames, // will be empty if isCluster is false
+                userName2443,
+                password2443,
+                usernameSSH,
+                passwordSSH,
+                showDatabaseInfo,
+                databaseServerHost, // will be empty if showDatabaseInfo is false
+                databaseUsername, // will be empty if showDatabaseInfo is false
+                databasePassword, // will be empty if showDatabaseInfo is false
+                selectedDatabases, // will be empty if showDatabaseInfo is false
+                selectedFilters,
+            });
+    
+            const newServerData = await createServerDataWithInitialData(hostname, selectedFilters, isCluster, showDatabaseInfo, nodesHostnames, usernameSSH, passwordSSH);
+    
+            res.status(201).json(newServerData);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ error });

@@ -129,9 +129,11 @@ export default function NavBar() {
             const filterItems = response.filters.map(filter => filter.filter);
             setFilters(filterItems);
         } catch (error) {
-            console.error("Error adding filter:", error);
-            alert(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`);
-            // Handle the error appropriately - maybe show a message to the user
+            console.error("Error deleting filter:", error);
+            toast.error(`Failed to remove filter. Error: ${((error as any).message || "Unknown error")}`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
         }
         setNewFilter("");
     };
@@ -149,8 +151,10 @@ export default function NavBar() {
                 setFilters(updatedDropdownItems);
             } catch (error) {
                 console.error("Error adding filter:", error);
-                alert(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`);
-                // Handle the error appropriately - maybe show a message to the user
+                toast.error(`Error adding filter. Error: ${((error as any).message || "Unknown error")}`, {
+                    position: "bottom-left",
+                    autoClose: 3000,
+                });
             }
             setNewFilter("");
         } else if (filters.includes(newFilter)) {

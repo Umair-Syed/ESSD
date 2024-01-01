@@ -11,6 +11,8 @@ import { useServersData } from '@/contexts/ServersDataContext';
 import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
 import { ServerData } from '@/models/server-data';
 import { updateServerMetaInfo } from "@/network/api/serversMetaApis"
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface IAddServerModalProps {
     setShowModal: (show: boolean) => void;
@@ -102,16 +104,18 @@ export default function AddServerModal({
             console.log("$$$$ updatedServerValues: ", updatedServerValues);
             const updatedServerDataResponse = await updateServerMetaInfo(updatedServerValues);
             if (updatedServerDataResponse.status === 201) {
-                alert(`Success: ${updatedServerDataResponse.data.hostname} updated successfully!`);
-                
+                toast.success(`Success: ${updatedServerDataResponse.data.hostname} updated successfully!`, {
+                    position: "bottom-left",
+                    autoClose: 3000,
+                });
                 // if current selectedFilter matches with this server's filter, then add this server to the list
                 if (selectedFilter === "All servers" || updatedServerDataResponse.data.selectedFilters.includes(selectedFilter)) {
-                    if (!serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)){
+                    if (!serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)) {
                         setServersData([updatedServerDataResponse.data, ...serversData]);
                     }
                 } else {
                     // removing if filter does not match with current selected filter
-                    if (serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)){
+                    if (serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)) {
                         console.log("$$$$ removing server from list: ", updatedServerDataResponse.data.hostname);
                         const updatedServersData = serversData.filter(server => server.hostname !== updatedServerDataResponse.data.hostname);
                         setServersData(updatedServersData);
@@ -120,7 +124,10 @@ export default function AddServerModal({
             }
         } catch (error) {
             console.error(error);
-            alert(error);
+            toast.error(`${error}`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
         }
     };
 
@@ -192,6 +199,18 @@ export default function AddServerModal({
                     setSelectedOptions={setSelectedTags}
                     placeholder={"Select tags for filtering later"}
                     className="mt-4"
+                />
+                <ToastContainer
+                    position="bottom-left"
+                    autoClose={5000}
+                    hideProgressBar
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="colored"
                 />
             </Modal.Body>
             <Modal.Footer className="flex justify-end space-x-2 bg-gray-100">
@@ -282,7 +301,10 @@ async function handleAddServer({ hostname, isCluster, nodeHostnames, username244
 
         //3. Verify response
         if (incompleteServerDataResponse.status === 201) {
-            alert(`Success: ${incompleteServerDataResponse.data.hostname} added successfully!`);
+            toast.success(`Success: ${incompleteServerDataResponse.data.hostname} added successfully!`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
 
             // if current selectedFilter matches with this server's filter, then add this server to the list
             if (selectedFilter === "All servers" || incompleteServerDataResponse.data.selectedFilters.includes(selectedFilter)) {
@@ -290,8 +312,18 @@ async function handleAddServer({ hostname, isCluster, nodeHostnames, username244
             }
         }
     } catch (error) {
-        console.error(error);
-        alert(error);
+        if ((error as any).response.status === 409) {
+            toast.warning(`Error: ${hostname} already exists!`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
+        } else {
+            console.error(error);
+            toast.error(`${error}`, {
+                position: "bottom-left",
+                autoClose: 3000,
+            });
+        }
     }
 
     //4. close modal

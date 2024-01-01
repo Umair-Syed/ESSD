@@ -19,6 +19,8 @@ import WarningModal from "@/components/WarningModal";
 import MemoryChart from "@/components/MemoryChart";
 import DiskChart from "@/components/DiskChart";
 import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus } from "@/util/getStatus";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Home() {
   const { selectedFilter } = useSelectedFilter();
@@ -51,6 +53,18 @@ export default function Home() {
       )) : (
         <div className="text-center text-gray-500 font-bold text-xl">No servers found</div>
       )}
+      <ToastContainer
+        position="bottom-left"
+        autoClose={5000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 }
@@ -105,7 +119,10 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
         // remove the server from the serversData
         const updatedServersData = serversData.filter((serverData) => serverData.hostname !== server.hostname);
         setServersData(updatedServersData);
-        alert(`Server ${server.hostname} deleted successfully`);
+        toast.success(`Server ${server.hostname} deleted successfully`, {
+          position: "bottom-left",
+          autoClose: 3000,
+        });
       }
     } catch (error) {
       console.error(error);
