@@ -9,7 +9,6 @@ import { IoIosArrowDown, IoIosArrowUp, IoMdMore } from "react-icons/io";
 import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
 import { IoCellular } from "react-icons/io5";
 import { LuRefreshCcw } from "react-icons/lu";
-import { FaExternalLinkAlt } from "react-icons/fa";
 import { RiRadioButtonLine } from "react-icons/ri";
 import { MdEdit, MdDelete, MdError } from "react-icons/md";
 import { Dropdown, Tooltip } from 'flowbite-react';
@@ -141,16 +140,34 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
         {/* Hostname, Link, Version */}
         <div>
           <div className='flex items-baseline'>
-            <div className='font-medium text-xl text-gray-600'>{serverData.hostname}</div>
-            <a className='text-sm text-gray-400 ml-4 hover:text-blue-500'
-              href={`https://${server.hostname}:8443`}
-              target="_blank"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}>
-              <FaExternalLinkAlt />
-            </a>
-            <div className='text-sm text-gray-400 font-light ml-4'>{serverData.serverVersion}</div>
+            <div className='font-medium text-xl text-gray-700'>{serverData.hostname}</div>
+            <div className='text-sm font-semibold text-gray-400 ml-4'>{serverData.serverVersion}</div>
+            <div className='ml-4 border rounded-md px-2'>
+              <a className='text-sm hover:text-[#003E43] font-bold text-[#003E43]/[.40]'
+                href={`https://${server.hostname}:8443`}
+                target="_blank"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}>
+                EM
+              </a>
+              <a className='ml-4 text-sm hover:text-[#E7478B] font-bold text-[#E7478B]/[.40]'
+                href={`https://${server.hostname}:2443/kibana4/app/kibana`}
+                target="_blank"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}>
+                K
+              </a>
+              <a className='ml-4 text-sm hover:text-[#F15F29] font-bold text-[#F15F29]/[.40]'
+                href={`https://${server.hostname}:9091`}
+                target="_blank"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}>
+                OF
+              </a>
+            </div>
           </div>
 
           {serverData.alias !== "" && (
