@@ -53,7 +53,12 @@ export function getDatabaseStatus(showDatabaseInfo: boolean, datbaseStatus: mode
         status: STATUS_UP
     };
 
-    if (showDatabaseInfo && datbaseStatus.length === 0) {
+    if (showDatabaseInfo === false) {
+        status.status = STATUS_UNKNOWN;
+        return status;
+    }
+
+    if (datbaseStatus.length === 0) {
         status.status = STATUS_UNKNOWN;
         return status;
     }

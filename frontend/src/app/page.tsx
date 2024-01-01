@@ -247,12 +247,17 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
                   </div>
                 </div>
                 <div className='mt-4'>
-                  {serverData.databaseStatus.map((database) => (
+                  {serverData.databaseStatus.length > 0 ? (serverData.databaseStatus.map((database) => (
                     <div key={database.databaseName} className='flex justify-between px-4'>
                       <div className='text-lg text-gray-700 mb-2'>{database.databaseName}</div>
                       <div className='text-sm text-green-600 font-bold'>{database.status}</div>
                     </div>
-                  ))}
+                  ))) :
+                    <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
+                      <div>Couldn't fetch databases status. Looks like database server is down.</div>
+                      <div className='text-xl'><MdError className='text-red-400' /></div>
+                    </div>
+                  }
                 </div>
               </div>
             }
