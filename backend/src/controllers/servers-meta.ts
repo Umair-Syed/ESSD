@@ -105,7 +105,7 @@ async function createServerDataWithInitialData(
             isCluster: isCluster,
             showDatabaseInfo: showDatabaseInfo,
             nodesHostnames: nodesHostnames,
-            alias: alias,
+            alias: alias !== hostname ? alias : "",
         },
         { upsert: true, new: true }
     );
