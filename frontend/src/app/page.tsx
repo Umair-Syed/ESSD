@@ -10,7 +10,8 @@ import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
 import { IoCellular } from "react-icons/io5";
 import { LuRefreshCcw } from "react-icons/lu";
 import { FaExternalLinkAlt } from "react-icons/fa";
-import { MdEdit, MdDelete } from "react-icons/md";
+import { RiRadioButtonLine } from "react-icons/ri";
+import { MdEdit, MdDelete, MdError } from "react-icons/md";
 import { Dropdown, Tooltip } from 'flowbite-react';
 import styles from './page.module.css';
 import AddServerModal from "@/components/AddServerModal";
@@ -471,7 +472,6 @@ function ServicesDetails({ serverData, nodename }: IServicesDetailsProps) {
     }
   }
 
-  console.log(`nodename: ${nodename} servicesStatusArray: ${JSON.stringify(servicesStatusArray)}`);
   return (
     <div className='border-2 rounded-md pb-2 mt-8 mb-8'>
       <div className='flex justify-between bg-gray-200 px-2 py-2'>
@@ -481,11 +481,20 @@ function ServicesDetails({ serverData, nodename }: IServicesDetailsProps) {
         </div>
       </div>
       <div className='mt-4'>
-        {couldntFetchServices ? <div>Couldn't fetch services status</div> :
-          servicesStatusArray.map((service) => (
-            <div key={service.name} className='flex justify-between px-4'>
-              <div className='text-lg text-gray-700 mb-2'>{service.name}</div>
-              <div className='text-sm text-green-600 font-bold'>{service.status}</div>
+        {couldntFetchServices ?
+          <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
+            <div>Couldn't fetch services status. Looks like server is down  </div>
+            <div className='text-xl'><MdError className='text-red-400' /></div>
+          </div>
+          :
+          servicesStatusArray.map((service, index) => (
+            <div
+              key={service.name}
+              className={`flex justify-between items-center px-4 py-2 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+              <div className='text-lg text-gray-700'>{service.name}</div>
+              <div className='text-xl'>
+                {service.status === "UP" ? <RiRadioButtonLine className='text-green-500' /> : <RiRadioButtonLine className='text-red-500' />}
+              </div>
             </div>
           ))}
       </div>
