@@ -26,10 +26,13 @@ ChartJS.register(
     annotationPlugin,
 );
 
-const preprocessData = (dataArray: number[]) => dataArray.map(value => {
-    if (value === -1) return null; // Helps to create a break in the line
-    return Number((value / 1024).toFixed(1)); // Convert MB to GB
-  });
+const preprocessData = (dataArray: number[]) => {
+    if (!dataArray || dataArray.length === 0) return [];
+    return dataArray.map(value => {
+        if (value === -1) return null; // Helps to create a break in the line
+        return Number((value / 1024).toFixed(1)); // Convert MB to GB
+    })
+};
 
 
 export default function MemoryChart(memoryData: IMemoryPressureForNode) {
@@ -53,15 +56,15 @@ export default function MemoryChart(memoryData: IMemoryPressureForNode) {
             legend: {
                 position: 'top' as const,
                 labels: {
-                  boxWidth: 5,
-                  boxHeight: 1,
+                    boxWidth: 5,
+                    boxHeight: 1,
                 }
             },
             title: {
                 display: true,
                 text: 'Memory and Swap Usage Over Time (GB)',
             },
-            annotation: { 
+            annotation: {
                 annotations: {
                     line1: {
                         type: 'line' as const,

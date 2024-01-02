@@ -23,10 +23,13 @@ ChartJS.register(
     Legend,
 );
 
-const preprocessData = (dataArray: number[]) => dataArray.map(value => {
-    if (value === -1) return null; // Helps to create a break in the line
-    return Number(value); 
-  });
+const preprocessData = (dataArray: number[]) => {
+    if (!dataArray || dataArray.length === 0) return [];
+    return dataArray.map(value => {
+        if (value === -1) return null; // Helps to create a break in the line
+        return Number(value);
+    })
+};
 
 
 export default function DiskChart(diskData: IDiskUsageForNode) {
@@ -47,8 +50,8 @@ export default function DiskChart(diskData: IDiskUsageForNode) {
             legend: {
                 position: 'top' as const,
                 labels: {
-                  boxWidth: 5,
-                  boxHeight: 1,
+                    boxWidth: 5,
+                    boxHeight: 1,
                 }
             },
             title: {
