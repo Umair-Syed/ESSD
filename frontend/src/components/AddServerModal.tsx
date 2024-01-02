@@ -5,6 +5,7 @@ import * as serverMetaApi from "@/network/api/serversMetaApis"
 import * as databaseApi from "@/network/api/databaseApis"
 import { getFilters } from "@/network/api/miscelleneousDataApis";
 import { IoCellular } from "react-icons/io5";
+import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
 import { IconType } from "react-icons";
 import { useServersData } from '@/contexts/ServersDataContext';
@@ -409,6 +410,12 @@ interface IFieldsWithUsernameAndPasswordProps {
 
 // Section 2 & 3: Service and disk/memory fields component
 function FieldsWithUsernameAndPassword({ title, description, setUsername, setPassword, usernameDefaultValue, passwordDefaultValue, icons }: IFieldsWithUsernameAndPasswordProps) {
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+    const togglePasswordVisibility = () => {
+        setIsPasswordVisible(!isPasswordVisible);
+    };
+
     return (
         <div className="px-4 py-6 bg-white rounded-md shadow-sm mt-4">
             <div className="flex justify-between mb-2">
@@ -430,13 +437,22 @@ function FieldsWithUsernameAndPassword({ title, description, setUsername, setPas
                 onChange={(e) => setUsername(e.target.value)}
                 className="mb-2 w-full p-2 border border-gray-300 rounded"
             />
-            <input
-                type="text"
-                placeholder="password"
-                defaultValue={passwordDefaultValue}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded"
-            />
+            <div className="relative">
+                <input
+                    type={isPasswordVisible ? "text" : "password"}
+                    placeholder="password"
+                    defaultValue={passwordDefaultValue}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                    {isPasswordVisible ? (
+                        <IoMdEyeOff className="text-xl text-gray-600" onClick={togglePasswordVisibility} />
+                    ) : (
+                        <IoMdEye className="text-xl text-gray-600" onClick={togglePasswordVisibility} />
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
@@ -472,6 +488,11 @@ function DatabaseFields({
 }: IDatabaseFieldsProps) {
     const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
     const [databases, setDatabases] = useState<string[]>([]);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+    const togglePasswordVisibility = () => {
+        setIsPasswordVisible(!isPasswordVisible);
+    };
 
     const fetchDatabases = async () => {
         setIsLoadingDatabases(true);
@@ -525,13 +546,22 @@ function DatabaseFields({
                         onChange={(e) => setDatabaseUsername(e.target.value)}
                         className="mb-2 w-full p-2 border border-gray-300 rounded"
                     />
-                    <input
-                        type="text"
-                        placeholder="Database Password"
-                        defaultValue={databasePassword}
-                        onChange={(e) => setDatabasePassword(e.target.value)}
-                        className="mb-2 w-full p-2 border border-gray-300 rounded"
-                    />
+                    <div className="relative">
+                        <input
+                            type={isPasswordVisible ? "text" : "password"}
+                            placeholder="Database Password"
+                            defaultValue={databasePassword}
+                            onChange={(e) => setDatabasePassword(e.target.value)}
+                            className="mb-2 w-full p-2 border border-gray-300 rounded"
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                            {isPasswordVisible ? (
+                                <IoMdEyeOff className="text-xl text-gray-600" onClick={togglePasswordVisibility} />
+                            ) : (
+                                <IoMdEye className="text-xl text-gray-600" onClick={togglePasswordVisibility} />
+                            )}
+                        </div>
+                    </div>
                     <div className="flex justify-between">
                         <CheckboxDropdown
                             options={databases}
