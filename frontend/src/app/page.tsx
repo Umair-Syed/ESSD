@@ -9,7 +9,6 @@ import { IoIosArrowDown, IoIosArrowUp, IoMdMore } from "react-icons/io";
 import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
 import { IoCellular } from "react-icons/io5";
 import { LuRefreshCcw } from "react-icons/lu";
-import { RiRadioButtonLine } from "react-icons/ri";
 import { MdEdit, MdDelete, MdError } from "react-icons/md";
 import { Dropdown, Tooltip } from 'flowbite-react';
 import styles from './page.module.css';
@@ -532,7 +531,7 @@ function ServicesDetails({ serverData, nodename }: IServicesDetailsProps) {
               className={`flex justify-between items-center px-4 py-2 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
               <div className='text-lg text-gray-700'>{service.name}</div>
               <div className='text-xl'>
-                {service.status === "UP" ? <RiRadioButtonLine className='text-green-500' /> : <RiRadioButtonLine className='text-red-500' />}
+                {service.status === "UP" ? <IoCellular className='text-green-400' /> : <IoCellular className='text-red-400' />}
               </div>
             </div>
           ))}
