@@ -39,10 +39,10 @@ export default function DiskChart(diskData: IDiskUsageForNode) {
     const capacity = Number(diskData.capacity);
 
     // Format timestamps into a human-readable format (e.g., HH:mm)
-    const formattedLabels = diskData.timestamps.map(timestamp => {
+    const formattedLabels = (diskData.timestamps && diskData.timestamps.length > 0) ? diskData.timestamps.map(timestamp => {
         const date = new Date(timestamp);
         return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-    });
+    }) : [];
 
     const options: ChartOptions = {
         responsive: true,

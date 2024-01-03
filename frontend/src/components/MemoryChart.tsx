@@ -45,10 +45,10 @@ export default function MemoryChart(memoryData: IMemoryPressureForNode) {
     const totalSwapMemoryGB = Number((memoryData.swap.total / 1024).toFixed(1));
 
     // Format timestamps into a human-readable format (e.g., HH:mm)
-    const formattedLabels = memoryData.timestamps.map(timestamp => {
+    const formattedLabels = (memoryData.timestamps && memoryData.timestamps.length > 0) ? memoryData.timestamps.map(timestamp => {
         const date = new Date(timestamp);
         return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-    });
+    }) : [];
 
     const options: ChartOptions = {
         responsive: true,

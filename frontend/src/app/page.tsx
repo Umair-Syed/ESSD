@@ -16,6 +16,7 @@ import AddServerModal from "@/components/AddServerModal";
 import WarningModal from "@/components/WarningModal";
 import MemoryChart from "@/components/MemoryChart";
 import DiskChart from "@/components/DiskChart";
+import { Spinner } from 'flowbite-react';
 import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus } from "@/util/getStatus";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -80,7 +81,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
   const [serverData, setServerData] = useState<ServerData>(server); // initial value is the server data passed in. Using hook so that can update the data when refreshing.
   const [showEditServerModal, setShowEditServerModal] = useState(false);
   const [showServerDeleteModal, setShowServerDeleteModal] = useState(false);
-
+  const [selectedNodeForCluster, setSelectedNodeForCluster] = useState<string | undefined>(serverData.isCluster ? serverData.nodesHostnames[0] : undefined);
 
   useEffect(() => {
     // server.createdAt is within last 5mins (usually cron job interval) and is empty, then refresh data for it. Refreshing because it's a newly added server and new servers don't have all the data.
@@ -236,6 +237,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
           )}
         </div>
       </div>
+      {/* icons for cluster */}
       {serverData.isCluster && (
         <div className='mt-4'>
           {serverData.nodesHostnames.map((nodename) => (
@@ -249,53 +251,34 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
           ))}
         </div>
       )}
+
+      {/* Expanded row */}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedServer === serverData.hostname ? "h-[520px]" : "h-0"}`}>
         {expandedServer === serverData.hostname &&
-          <div className={`mt-4 pt-4 border-t overflow-y-auto pr-4`} style={{ maxHeight: "520px" }}>  {/* Adjust maxHeight as needed */}
-            {/* Display the expanded data here */}
-            {/* Disk and Memory status */}
-            <div className='border-2 rounded-md pb-2'>
-              <div className='flex justify-between bg-gray-200 px-2 py-2'>
-                <h1 className='text-gray-600'>Disk and Memory usage</h1>
+          <div className={`mt-4 pt-4 border-t overflow-y-auto pr-4`} style={{ maxHeight: "520px" }}>
+            {serverData.isCluster ? (
+              <>
+                {/* Horizontal list of nodenames (tabs) */}
+                <div className="flex space-x-2 overflow-x-auto mb-2 justify-center">
+                  {serverData.nodesHostnames.map((nodename) => (
+                    <button
+                      key={nodename}
+                      className={`py-2 px-4 rounded-md ${selectedNodeForCluster === nodename ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                      onClick={() => setSelectedNodeForCluster(nodename)}
+                    >
+                      {nodename}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Display the expanded row for the selected nodename */}
                 <div>
-                  <DiskAndMemoryIndicator serverData={serverData} nodename={serverData.hostname} />
+                  <ExpandedRow serverData={serverData} nodename={selectedNodeForCluster!} />
                 </div>
-              </div>
-              <div className='flex mt-2'>
-                <div style={{ width: '500px', }}>
-                  <DiskChart {...serverData.diskUsages[0]} />
-                </div>
-                <div style={{ width: '500px', }} className='ml-6'>
-                  <MemoryChart {...serverData.memoryPressure[0]} />
-                </div>
-              </div>
-            </div>
-            {/* Databases status */}
-            {serverData.showDatabaseInfo &&
-              <div className='border-2 rounded-md pb-2 mt-8'>
-                <div className='flex justify-between bg-gray-200 px-2 py-2'>
-                  <h1 className='text-gray-600'>Database status</h1>
-                  <div>
-                    <DatabaseStatusIndicator serverData={serverData} nodename={serverData.hostname} />
-                  </div>
-                </div>
-                <div className='mt-4'>
-                  {serverData.databaseStatus.length > 0 ? (serverData.databaseStatus.map((database) => (
-                    <div key={database.databaseName} className='flex justify-between px-4'>
-                      <div className='text-lg text-gray-700 mb-2'>{database.databaseName}</div>
-                      <div className='text-sm text-green-600 font-bold'>{database.status}</div>
-                    </div>
-                  ))) :
-                    <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
-                      <div>Couldn't fetch databases status. Looks like database server is down.</div>
-                      <div className='text-xl'><MdError className='text-red-400' /></div>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-            {/* Services status */}
-            <ServicesDetails serverData={serverData} nodename={serverData.hostname} />
+              </>
+            ) : (
+              <ExpandedRow serverData={serverData} nodename={serverData.hostname} />
+            )}
           </div>
         }
       </div>
@@ -323,6 +306,75 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
     </div>
   );
 }
+
+
+interface IExpandedRowProps {
+  serverData: ServerData;
+  nodename: string;
+}
+
+function ExpandedRow({ serverData, nodename }: IExpandedRowProps) {
+  const diskUsage = serverData.diskUsages.find((diskUsage) => diskUsage.nodeName === nodename);
+  const memoryPressure = serverData.memoryPressure.find((memoryPressure) => memoryPressure.nodeName === nodename);
+
+  return (
+    <div>
+      {/* Display the expanded data here */}
+      {/* Disk and Memory status */}
+      <div className='border-2 rounded-md pb-2'>
+        <div className='flex justify-between bg-gray-200 px-2 py-2'>
+          <h1 className='text-gray-600'>Disk and Memory usage</h1>
+          <div>
+            <DiskAndMemoryIndicator serverData={serverData} nodename={nodename} />
+          </div>
+        </div>
+        <div className='flex mt-2'>
+          <div style={{ width: '500px', }}>
+            {
+              !diskUsage ?
+                <Spinner aria-label="Large spinner example" size="lg" color="warning"/> :
+                <DiskChart {...diskUsage} />
+            }
+          </div>
+          <div style={{ width: '500px', }} className='ml-6'>
+            {
+              !memoryPressure ?
+                <Spinner aria-label="Large spinner example" size="lg" color="warning"/> :
+                <MemoryChart {...memoryPressure} />
+            }
+          </div>
+        </div>
+      </div>
+      {/* Databases status */}
+      {serverData.showDatabaseInfo &&
+        <div className='border-2 rounded-md pb-2 mt-8'>
+          <div className='flex justify-between bg-gray-200 px-2 py-2'>
+            <h1 className='text-gray-600'>Database status</h1>
+            <div>
+              <DatabaseStatusIndicator serverData={serverData} nodename={nodename} />
+            </div>
+          </div>
+          <div className='mt-4'>
+            {serverData.databaseStatus.length > 0 ? (serverData.databaseStatus.map((database) => (
+              <div key={database.databaseName} className='flex justify-between px-4'>
+                <div className='text-lg text-gray-700 mb-2'>{database.databaseName}</div>
+                <div className='text-sm text-green-400 font-bold'>{database.status}</div>
+              </div>
+            ))) :
+              <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
+                <div>Couldn't fetch databases status. Looks like database server is down.</div>
+                <div className='text-xl'><MdError className='text-red-400' /></div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      {/* Services status */}
+      <ServicesDetails serverData={serverData} nodename={nodename} />
+    </div>
+  );
+}
+
 
 interface IStatusIndicatorsProps {
   isRefreshing: boolean;

@@ -41,7 +41,7 @@ export default function NavBar() {
         const fetchFilters = async () => {
             try {
                 const filtersData = await getFilters();
-                const fetchedFilterItems = filtersData.filters.map(filter => filter.filter);
+                const fetchedFilterItems = (filtersData.filters && filtersData.filters.length > 0) ? filtersData.filters.map(filter => filter.filter) : [];
                 // All servers filter is always present. When user choose All filter, send GET request without filter.
                 const updatedDropdownItems = [...filters, ...fetchedFilterItems];
                 setFilters(updatedDropdownItems);
@@ -126,7 +126,7 @@ export default function NavBar() {
                 position: "bottom-left",
                 autoClose: 3000,
             });
-            const filterItems = response.filters.map(filter => filter.filter);
+            const filterItems = (response.filters && response.filters.length > 0) ? response.filters.map(filter => filter.filter) : [];
             setFilters(filterItems);
         } catch (error) {
             console.error("Error deleting filter:", error);
