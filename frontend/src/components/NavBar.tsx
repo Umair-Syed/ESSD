@@ -29,7 +29,6 @@ export default function NavBar() {
 
     const { selectedFilter, setSelectedFilter } = useSelectedFilter();
 
-
     const handleClickOutside = (event: Event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
             setDropdownOpen(false);
@@ -45,12 +44,10 @@ export default function NavBar() {
                 // All servers filter is always present. When user choose All filter, send GET request without filter.
                 const updatedDropdownItems = [...filters, ...fetchedFilterItems];
                 setFilters(updatedDropdownItems);
-                setSelectedFilter(updatedDropdownItems[0])
             } catch (error) {
                 console.error("Error fetching filters:", error);
             }
         };
-
         fetchFilters();
     }, []);
 

@@ -1,4 +1,5 @@
-import { useState, createContext, useContext, PropsWithChildren } from 'react';
+'use client';
+import { useState, createContext, useContext, PropsWithChildren, useEffect } from 'react';
 
 interface SelectedFilterContextType {
   selectedFilter: string;
@@ -9,7 +10,13 @@ export const SelectedFilterContext = createContext<SelectedFilterContextType | u
 
 
 export function SelectedFilterProvider({ children }: PropsWithChildren) {
-  const [selectedFilter, setSelectedFilter] = useState<string>("All servers");
+  const [selectedFilter, setSelectedFilter] = useState<string>(localStorage.getItem('selectedFilter') || "All servers");
+  
+  // Update localStorage whenever selectedFilter changes
+  useEffect(() => {
+    localStorage.setItem('selectedFilter', selectedFilter);
+  }, [selectedFilter]);
+
 
   return (
     <SelectedFilterContext.Provider value={{ selectedFilter, setSelectedFilter }}>

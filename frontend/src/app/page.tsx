@@ -33,7 +33,7 @@ export default function Home() {
       setIsLoadingData(true);
       if (selectedFilter === "All servers") {
         const allServersData = await getAllServersData();
-        console.log(`data: ${JSON.stringify(allServersData)}`);
+        // console.log(`data: ${JSON.stringify(allServersData)}`);
         setServersData(allServersData);
       } else {
         const filteredServersData = await getServersDataForFilter(selectedFilter);
@@ -251,7 +251,7 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
       {serverData.isCluster && (
         <div className='mt-4'>
           {serverData.nodesHostnames.map((nodename) => (
-            <div className='flex justify-between mt-2'>
+            <div key={nodename} className='flex justify-between mt-2'>
               <div className='text-lg text-gray-500'>{nodename}</div>
               <StatusIndicators
                 isRefreshing={isRefreshing}
