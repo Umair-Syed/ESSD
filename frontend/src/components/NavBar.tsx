@@ -13,6 +13,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { getFilters, deleteFilter } from "@/network/api/miscelleneousDataApis";
 import WarningModal from "./WarningModal";
 import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
+import { useSearchQuery } from '@/contexts/SearchQueryContext';
 
 
 export default function NavBar() {
@@ -28,6 +29,7 @@ export default function NavBar() {
     const [filterToDelete, setFilterToDelete] = useState('');
 
     const { selectedFilter, setSelectedFilter } = useSelectedFilter();
+    const {setSearchQuery } = useSearchQuery();
 
     const handleClickOutside = (event: Event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -260,7 +262,14 @@ export default function NavBar() {
                             </button>
                         )}
                         {/* Search */}
-                        {pathname === "/" && <input type="search" placeholder="Search" className="py-2 px-4 bg-white border border-gray-300 rounded-md" />}
+                        {pathname === "/" &&
+                            <input
+                                type="search"
+                                placeholder="Search"
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="py-2 px-4 bg-white border border-gray-300 rounded-md"
+                            />
+                        }
                     </div>
                 </div>
                 {/* Modal to add server */}

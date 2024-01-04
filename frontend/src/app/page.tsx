@@ -21,12 +21,17 @@ import { Spinner } from 'flowbite-react';
 import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus } from "@/util/getStatus";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useSearchQuery } from '@/contexts/SearchQueryContext';
+import useDebounce from '@/util/useDebounceHook';
 
 export default function Home() {
   const { selectedFilter } = useSelectedFilter();
   const { serversData, setServersData } = useServersData();
   const [expandedServer, setExpandedServer] = useState<string | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const { searchQuery } = useSearchQuery();
+  const [filteredServers, setFilteredServers] = useState(serversData); // Separate state for filtered servers
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,14 +50,37 @@ export default function Home() {
     fetchData();
   }, [selectedFilter]);
 
+  useEffect(() => {
+    if (!Array.isArray(serversData) || !serversData.length) return;
+
+    // Filter serverData based on search query or return all if query is empty
+    const filtered = debouncedSearchQuery
+      ? serversData.filter((serverData) => {
+        const query = debouncedSearchQuery.toLowerCase();
+        return serverData.hostname.toLowerCase().includes(query) || serverData.alias.toLowerCase().includes(query);
+      })
+      : serversData;
+
+    setFilteredServers(filtered);
+  }, [debouncedSearchQuery, serversData]);
+
+
   const toggleExpand = (serverHostname: string) => {
     setExpandedServer(expandedServer === serverHostname ? null : serverHostname);
   };
 
   return (
     <div className="p-4 xl:mx-64 lg:mx-32 md:mx-12">
-      {serversData.length > 0 ? serversData.map((server) => (
-        <RowItem key={server.hostname} server={server} setServersData={setServersData} serversData={serversData} toggleExpand={toggleExpand} expandedServer={expandedServer} />
+      {filteredServers.length > 0 ? filteredServers.map((server) => (
+        <RowItem
+          key={server.hostname}
+          server={server}
+          setServersData={setServersData}
+          filteredServers={filteredServers}
+          setFilteredServers={setFilteredServers}
+          serversData={serversData}
+          toggleExpand={toggleExpand}
+          expandedServer={expandedServer} />
       )) : (
         <div className="text-center text-gray-500 font-bold text-xl">{isLoadingData ? <Spinner aria-label="Large spinner example" size="xl" color="success" /> : "No servers found"}</div>
       )}
@@ -76,11 +104,13 @@ interface IRowItemProps {
   server: ServerData; // current item server data. Use serverData state instead 
   serversData: ServerData[];
   setServersData: (serversData: ServerData[]) => void;
+  filteredServers: ServerData[];
+  setFilteredServers: (serversData: ServerData[]) => void;
   toggleExpand: (serverHostname: string) => void;
   expandedServer: string | null;
 }
 
-function RowItem({ server, serversData, setServersData, toggleExpand, expandedServer }: IRowItemProps) {
+function RowItem({ server, serversData, setServersData, filteredServers, setFilteredServers, toggleExpand, expandedServer }: IRowItemProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [serverData, setServerData] = useState<ServerData>(server); // initial value is the server data passed in. Using hook so that can update the data when refreshing.
   const [showEditServerModal, setShowEditServerModal] = useState(false);

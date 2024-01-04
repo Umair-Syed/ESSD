@@ -1,10 +1,11 @@
 import { useState, createContext, useContext, PropsWithChildren } from 'react';
 
+interface SearchQueryContextType {
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+}
 
-export const SearchQueryContext = createContext({
-  searchQuery: "",
-  setSearchQuery: (searchQuery: string) => { },
-});
+export const SearchQueryContext = createContext<SearchQueryContextType | undefined>(undefined);
 
 
 export function SearchQueryProvider({ children }: PropsWithChildren) {
