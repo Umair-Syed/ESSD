@@ -25,9 +25,11 @@ export default function Home() {
   const { selectedFilter } = useSelectedFilter();
   const { serversData, setServersData } = useServersData();
   const [expandedServer, setExpandedServer] = useState<string | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoadingData(true);
       if (selectedFilter === "All servers") {
         const allServersData = await getAllServersData();
         console.log(`data: ${JSON.stringify(allServersData)}`);
@@ -36,6 +38,7 @@ export default function Home() {
         const filteredServersData = await getServersDataForFilter(selectedFilter);
         setServersData(filteredServersData);
       }
+      setIsLoadingData(false);
     };
 
     fetchData();
@@ -50,7 +53,7 @@ export default function Home() {
       {serversData.length > 0 ? serversData.map((server) => (
         <RowItem key={server.hostname} server={server} setServersData={setServersData} serversData={serversData} toggleExpand={toggleExpand} expandedServer={expandedServer} />
       )) : (
-        <div className="text-center text-gray-500 font-bold text-xl">No servers found</div>
+        <div className="text-center text-gray-500 font-bold text-xl">{isLoadingData ? <Spinner aria-label="Large spinner example" size="xl" color="success" /> : "No servers found"}</div>
       )}
       <ToastContainer
         position="bottom-left"
