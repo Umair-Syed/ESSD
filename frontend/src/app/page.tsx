@@ -7,6 +7,7 @@ import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
 import { useServersData } from '@/contexts/ServersDataContext';
 import { IoIosArrowDown, IoIosArrowUp, IoMdMore } from "react-icons/io";
 import { FaHardDrive, FaMemory, FaDatabase } from "react-icons/fa6";
+import { FaExternalLinkAlt } from "react-icons/fa";
 import { IoCellular } from "react-icons/io5";
 import { LuRefreshCcw } from "react-icons/lu";
 import { MdEdit, MdDelete, MdError } from "react-icons/md";
@@ -145,31 +146,37 @@ function RowItem({ server, serversData, setServersData, toggleExpand, expandedSe
           <div className='flex items-baseline'>
             <div className='font-medium text-xl text-gray-700'>{serverData.hostname}</div>
             <div className='text-sm font-semibold text-gray-400 ml-4'>{serverData.serverVersion}</div>
-            <div className='ml-4 border rounded-md px-2'>
-              <a className='text-sm hover:text-[#003E43] font-bold text-[#003E43]/[.40]'
-                href={`https://${server.hostname}:8443`}
-                target="_blank"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}>
-                EM
-              </a>
-              <a className='ml-4 text-sm hover:text-[#E7478B] font-bold text-[#E7478B]/[.40]'
-                href={`https://${server.hostname}:2443/kibana4/app/kibana`}
-                target="_blank"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}>
-                K
-              </a>
-              <a className='ml-4 text-sm hover:text-[#F15F29] font-bold text-[#F15F29]/[.40]'
-                href={`https://${server.hostname}:9091`}
-                target="_blank"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}>
-                OF
-              </a>
+            <div className='ml-4 border rounded-md px-2 flex items-center'>
+              <Tooltip content={<div className='flex gap-2 items-center'><FaExternalLinkAlt />Enterprise Manager</div>} style="light">
+                <a className='text-sm hover:text-[#003E43] font-bold text-[#003E43]/[.40]'
+                  href={`https://${server.hostname}:8443`}
+                  target="_blank"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}>
+                  EM
+                </a>
+              </Tooltip>
+              <Tooltip content={<div className='flex gap-2 items-center'><FaExternalLinkAlt />Kibana</div>} style="light">
+                <a className='ml-4 text-sm hover:text-[#E7478B] font-bold text-[#E7478B]/[.40]'
+                  href={`https://${server.hostname}:2443/kibana4/app/kibana`}
+                  target="_blank"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}>
+                  K
+                </a>
+              </Tooltip>
+              <Tooltip content={<div className='flex gap-2 items-center'><FaExternalLinkAlt />Openfire</div>} style="light">
+                <a className='ml-4 text-sm hover:text-[#F15F29] font-bold text-[#F15F29]/[.40]'
+                  href={`https://${server.hostname}:9091`}
+                  target="_blank"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}>
+                  OF
+                </a>
+              </Tooltip>
             </div>
           </div>
 
@@ -335,14 +342,14 @@ function ExpandedRow({ serverData, nodename }: IExpandedRowProps) {
           <div style={{ width: '500px', }}>
             {
               !diskUsage ?
-                <Spinner aria-label="Large spinner example" size="lg" color="warning"/> :
+                <Spinner aria-label="Large spinner example" size="lg" color="warning" /> :
                 <DiskChart {...diskUsage} />
             }
           </div>
           <div style={{ width: '500px', }} className='ml-6'>
             {
               !memoryPressure ?
-                <Spinner aria-label="Large spinner example" size="lg" color="warning"/> :
+                <Spinner aria-label="Large spinner example" size="lg" color="warning" /> :
                 <MemoryChart {...memoryPressure} />
             }
           </div>
