@@ -53,7 +53,7 @@ export default function Home() {
     if (!Array.isArray(serversData)) return;
 
     // Filter serverData based on search query or return all if query is empty
-    
+
     const filtered = debouncedSearchQuery
       ? serversData.filter((serverData) => {
         const query = debouncedSearchQuery.toLowerCase();
@@ -411,6 +411,21 @@ function ExpandedRow({ serverData, nodename }: IExpandedRowProps) {
       }
       {/* Services status */}
       <ServicesDetails serverData={serverData} nodename={nodename} />
+      {/* Tags/filters */}
+      {serverData.selectedFilters.length > 0 && (
+        <div className='mb-4 border-t'>
+          <h1 className='text-gray-500 font-semibold mt-8'>Tags</h1>
+          <div className='flex gap-2 mt-4'>
+            {serverData.selectedFilters.map((filter) => (
+              <div key={filter} className='border rounded-md px-2 py-1 text-sm bg-gray-100 text-gray-500'>{filter}</div>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* last updated */}
+      <div className='flex justify-end mt-4 mb-8'>
+        <div className='text-sm text-gray-400'>Last updated: {new Date(serverData.updatedAt!).toLocaleString()}</div>
+      </div>
     </div>
   );
 }
