@@ -102,7 +102,6 @@ export default function AddServerModal({
             selectedFilters: selectedTags
         }
         try {
-            console.log("$$$$ updatedServerValues: ", updatedServerValues);
             const updatedServerDataResponse = await updateServerMetaInfo(updatedServerValues);
             if (updatedServerDataResponse.status === 201) {
                 toast.success(`Success: ${updatedServerDataResponse.data.hostname} updated successfully!`, {
@@ -110,14 +109,13 @@ export default function AddServerModal({
                     autoClose: 3000,
                 });
                 // if current selectedFilter matches with this server's filter, then add this server to the list
-                if (selectedFilter === "All servers" || updatedServerDataResponse.data.selectedFilters.includes(selectedFilter)) {
+                if (selectedFilter.includes("All servers") || selectedFilter.every(filter => updatedServerDataResponse.data.selectedFilters.includes(filter))) {
                     if (!serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)) {
                         setServersData([updatedServerDataResponse.data, ...serversData]);
                     }
                 } else {
                     // removing if filter does not match with current selected filter
                     if (serversData.some(server => server.hostname === updatedServerDataResponse.data.hostname)) {
-                        console.log("$$$$ removing server from list: ", updatedServerDataResponse.data.hostname);
                         const updatedServersData = serversData.filter(server => server.hostname !== updatedServerDataResponse.data.hostname);
                         setServersData(updatedServersData);
                     }
@@ -246,7 +244,7 @@ interface IHandleAddServerProps {
     databasePassword: string;
     selectedDatabases: string[];
     selectedTags: string[];
-    selectedFilter: string;
+    selectedFilter: string[];
     serversData: ServerData[];
     setServersData: (serversData: ServerData[]) => void;
     setFormErrors: (errors: string[]) => void;
@@ -308,7 +306,7 @@ async function handleAddServer({ hostname, isCluster, nodeHostnames, username244
             });
 
             // if current selectedFilter matches with this server's filter, then add this server to the list
-            if (selectedFilter === "All servers" || incompleteServerDataResponse.data.selectedFilters.includes(selectedFilter)) {
+            if (selectedFilter.includes("All servers") || selectedFilter.every(filter => incompleteServerDataResponse.data.selectedFilters.includes(filter))) {
                 setServersData([incompleteServerDataResponse.data, ...serversData]);
             }
         }

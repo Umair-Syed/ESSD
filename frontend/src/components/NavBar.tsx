@@ -29,7 +29,7 @@ export default function NavBar() {
     const [filterToDelete, setFilterToDelete] = useState('');
 
     const { selectedFilter, setSelectedFilter } = useSelectedFilter();
-    const {setSearchQuery } = useSearchQuery();
+    const { setSearchQuery } = useSearchQuery();
 
     const handleClickOutside = (event: Event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -115,8 +115,35 @@ export default function NavBar() {
         `py-4 px-2 text-gray-500 text-xl hover:text-primary transition duration-300 ${pathname === href ? "text-grey-800 font-extrabold" : "font-semibold"}`;
 
     const handleFilterClick = (item: string) => {
-        setSelectedFilter(item);
-        setDropdownOpen(false);
+        let newFilterList = [...selectedFilter];
+
+        if (newFilterList.includes(item)) { // Checked item is clicked again
+            if (newFilterList.length === 1) {
+                if (newFilterList[0] === "All servers") {
+                    return;
+                } else {
+                    newFilterList = ["All servers"];
+                }
+            } else {
+                newFilterList = newFilterList.filter(filter => filter !== item);
+            }
+        } else { // Clicked item is not checked
+            if (newFilterList.length === 1 && newFilterList[0] === "All servers") {
+                // If only 'All servers' is selected, remove it and add the clicked item
+                newFilterList = [item];
+            } else if (newFilterList.length > 0 && !newFilterList.includes("All servers") && item === "All servers") {
+                // if all server is clicked and other filters are selected, remove all other filters
+                newFilterList = ["All servers"];
+            } else {
+                newFilterList.push(item);
+            }
+        }
+
+        if (newFilterList.length === 0) {
+            newFilterList = ["All servers"];
+        }
+
+        setSelectedFilter(newFilterList);
     };
 
     const handleFilterRemove = async (filter: string) => {
@@ -200,7 +227,7 @@ export default function NavBar() {
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                                 className="text-gray-700 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center border border-gray-300"
                             >
-                                {selectedFilter}
+                                {selectedFilter.length === 1 ? selectedFilter[0] : `${selectedFilter.length} filters selected`}
                                 <svg className="ml-2 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 12">
                                     <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5l5 5 5-5" />
                                 </svg>
@@ -214,9 +241,18 @@ export default function NavBar() {
                                             {filters.map((item) => (
                                                 <li key={item}>
                                                     <div className="flex justify-between hover:bg-gray-100">
-                                                        <button className="px-4 py-2 " onClick={() => handleFilterClick(item)}>
-                                                            {item}
-                                                        </button>
+                                                        {/* checkbox */}
+                                                        <div className="flex items-center px-4 py-2 justify-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="mr-2 rounded-sm"
+                                                                checked={selectedFilter.includes(item)}
+                                                                onChange={() => handleFilterClick(item)}
+                                                            />
+                                                            <button onClick={() => handleFilterClick(item)}>
+                                                                {item}
+                                                            </button>
+                                                        </div>
                                                         {item !== "All servers" &&
                                                             <button className="pr-2 py-2" onClick={() => {
                                                                 setFilterToDelete(item);

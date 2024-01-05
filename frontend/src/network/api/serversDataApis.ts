@@ -12,7 +12,8 @@ export async function getRefreshedServersDataForHostName(hostname: string): Prom
     return response.data;
 }
 
-export async function getServersDataForFilter(filter: string): Promise<ServerData[]> {
-    const response = await axiosInstance.get<ServerData[]>(`/servers-data/filter?filter=${filter}`);
+export async function getServersDataForFilter(filters: string[]): Promise<ServerData[]> {
+    const filterQuery = filters.join(',');
+    const response = await axiosInstance.get<ServerData[]>(`/servers-data/filter?filter=${filterQuery}`);
     return response.data;
 }

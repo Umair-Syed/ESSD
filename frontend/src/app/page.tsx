@@ -36,9 +36,8 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingData(true);
-      if (selectedFilter === "All servers") {
+      if (selectedFilter.includes("All servers")) {
         const allServersData = await getAllServersData();
-        // console.log(`data: ${JSON.stringify(allServersData)}`);
         setServersData(allServersData);
       } else {
         const filteredServersData = await getServersDataForFilter(selectedFilter);
@@ -51,9 +50,10 @@ export default function Home() {
   }, [selectedFilter]);
 
   useEffect(() => {
-    if (!Array.isArray(serversData) || !serversData.length) return;
+    if (!Array.isArray(serversData)) return;
 
     // Filter serverData based on search query or return all if query is empty
+    
     const filtered = debouncedSearchQuery
       ? serversData.filter((serverData) => {
         const query = debouncedSearchQuery.toLowerCase();
