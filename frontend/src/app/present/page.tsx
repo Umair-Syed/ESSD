@@ -10,6 +10,7 @@ import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServ
 import { ServicesStatusIndicator, DatabaseStatusIndicator, DiskUsageIndicator, MemoryPressureIndicator } from "@/components/StatusIndicators";
 import SmallDiskChart from '@/components/SmallDiskChart';
 import SmallMemoryChart from '@/components/SmallMemoryChart';
+import { Spinner } from 'flowbite-react';
 
 export default function PresentPage() {
   const { selectedFilter } = useSelectedFilter();
@@ -32,6 +33,13 @@ export default function PresentPage() {
     };
 
     fetchData();
+
+    // Automatically refresh data every 5min
+    const interval = setInterval(() => {
+      fetchData();
+    }, 300000); // 5min
+
+    return () => clearInterval(interval);
   }, [selectedFilter]);
 
 
@@ -62,21 +70,21 @@ export default function PresentPage() {
     reset: false,
   });
 
-  if (isLoadingData) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className='mt-8'>
-      <Carousel cols={3} rows={2} gap={5} loop autoplay={10000} showDots={true} hideArrow={true}>
-        {filteredServers.map((server, index) => (
-          <Carousel.Item key={index}>
-            <animated.div style={flipAnimation}>
-              {flipped ? <CardBack data={server} /> : <CardFront data={server} />}
-            </animated.div>
-          </Carousel.Item>
-        ))}
-      </Carousel>
+      {filteredServers.length > 0 ? (
+        <Carousel cols={3} rows={2} gap={5} loop autoplay={10000} showDots={true} hideArrow={true}>
+          {filteredServers.map((server, index) => (
+            <Carousel.Item key={index}>
+              <animated.div style={flipAnimation}>
+                {flipped ? <CardBack data={server} /> : <CardFront data={server} />}
+              </animated.div>
+            </Carousel.Item>
+          ))}
+        </Carousel>
+      ) : (
+        <div className="text-center text-gray-500 font-bold text-xl">{isLoadingData ? <Spinner aria-label="Large spinner example" size="xl" color="success" /> : "No servers found"}</div>
+      )}
     </div>
   );
 }
@@ -275,7 +283,7 @@ function CardBack({ data }: CardProps) {
 
   return (
     <div className={`mx-4 my-4 px-6 py-6 border-4 rounded-xl flex-col items-center justify-center bg-gray-300`}
-      style={{ transform: "rotateX(180deg)", borderColor: getCardColor(data)}}
+      style={{ transform: "rotateX(180deg)", borderColor: getCardColor(data) }}
     >
       <div className='flex justify-between items-center'>
         <div className='text-xl font-bold text-gray-700'>{data.hostname}</div>
