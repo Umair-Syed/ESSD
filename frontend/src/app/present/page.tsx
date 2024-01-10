@@ -44,7 +44,7 @@ export default function PresentPage() {
   useEffect(() => {
     const flipInterval = setInterval(() => {
       setFlipped((prev) => !prev);
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(flipInterval);
   }, []);
@@ -68,7 +68,7 @@ export default function PresentPage() {
 
   return (
     <div className='mt-8'>
-      <Carousel cols={3} rows={2} gap={5} loop autoplay={5000} showDots={true} hideArrow={true}>
+      <Carousel cols={3} rows={2} gap={5} loop autoplay={10000} showDots={true} hideArrow={true}>
         {filteredServers.map((server, index) => (
           <Carousel.Item key={index}>
             <animated.div style={flipAnimation}>
@@ -87,10 +87,13 @@ interface CardProps {
 }
 
 function CardFront({ data }: CardProps) {
-  console.log(`getCardColor(data) = ${getCardColor(data)}`)
-  const cardBGColorClass = `bg-${getCardColor(data)}/20`;
   return (
-    <div className={`${cardBGColorClass} mx-4 my-4 px-6 py-6 border-4 border-${getCardColor(data)} rounded-xl flex-col items-center justify-center`}>
+    <div className={` mx-4 my-4 px-6 py-6 border-4 rounded-xl flex-col items-center justify-center`}
+      style={{
+        backgroundColor: getCardColor(data, true),
+        borderColor: getCardColor(data),
+      }}
+    >
       <div className='flex justify-between items-center'>
         <div className='text-xl font-bold text-gray-700'>{data.hostname}</div>
         <div className='text-sm font-semibold text-gray-500'>{data.serverVersion}</div>
@@ -271,8 +274,8 @@ function CardBack({ data }: CardProps) {
 
 
   return (
-    <div className={`mx-4 my-4 px-6 py-6 border-4 border-${getCardColor(data)} rounded-xl flex-col items-center justify-center bg-gray-300`}
-      style={{ transform: "rotateX(180deg)" }}
+    <div className={`mx-4 my-4 px-6 py-6 border-4 rounded-xl flex-col items-center justify-center bg-gray-300`}
+      style={{ transform: "rotateX(180deg)", borderColor: getCardColor(data)}}
     >
       <div className='flex justify-between items-center'>
         <div className='text-xl font-bold text-gray-700'>{data.hostname}</div>
@@ -322,7 +325,7 @@ function CardBack({ data }: CardProps) {
   );
 }
 
-function getCardColor(data: ServerData) {
+function getCardColor(data: ServerData, translucent = false) {
   const servicesStatus = getServicesStatus(data.services, data.hostname, data.alias).status;
   const databaseStatus = getDatabaseStatus(data.showDatabaseInfo, data.databaseStatus).status;
   const diskUsageStatus = getDiskUsageStatus(data.diskUsages, data.hostname).status;
@@ -331,8 +334,8 @@ function getCardColor(data: ServerData) {
   const indicatorStatuses = [servicesStatus, databaseStatus, diskUsageStatus, memoryPressureStatus];
 
   if (indicatorStatuses.includes("DOWN")) {
-    return "red-500";
+    return translucent ? "rgb(220, 38, 38, 0.2)" : "rgb(220, 38, 38)"; //red-500
   } else {
-    return "green-500";
+    return translucent ? "rgb(22, 163, 74, 0.2)" : "rgb(22, 163, 74)"; // green-500
   }
 }
