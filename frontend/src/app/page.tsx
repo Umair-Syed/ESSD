@@ -18,7 +18,8 @@ import WarningModal from "@/components/WarningModal";
 import MemoryChart from "@/components/MemoryChart";
 import DiskChart from "@/components/DiskChart";
 import { Spinner } from 'flowbite-react';
-import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus } from "@/util/getStatus";
+import { getDatabaseStatus, getDiskUsageStatus, getMemoryPressureStatus, getServicesStatus, getIndicatorColorFromStatus, getIndicatorTooltipContent } from "@/util/getStatus";
+import { DiskAndMemoryIndicator, ServicesStatusIndicator, DatabaseStatusIndicator } from "@/components/StatusIndicators";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSearchQuery } from '@/contexts/SearchQueryContext';
@@ -472,125 +473,6 @@ function StatusIndicators({ isRefreshing, serverData, nodename }: IStatusIndicat
     </div>
   );
 }
-
-
-function getIndicatorColorFromStatus(status: string, isRefreshing?: boolean) {
-  if (isRefreshing) {
-    return "text-gray-400";
-  }
-
-  switch (status) {
-    case "UP":
-      return "text-green-600";
-    case "DOWN":
-      return "text-red-600";
-    case "WARNING":
-      return "text-yellow-400";
-    default:
-      return "text-gray-400";
-  }
-}
-
-function getIndicatorTooltipContent(status: string, about: string) {
-  if (about === "services") {
-    switch (status) {
-      case "UP":
-        return "All services are up and running";
-      case "DOWN":
-        return "Services are down";
-      case "WARNING":
-        return "Some services are down";
-      case "UNKNOWN":
-        return "Couldn't fetch services status";
-      default:
-        return "Unknown";
-    }
-  } else if (about === "database") {
-    switch (status) {
-      case "UP":
-        return "All databases are online";
-      case "DOWN":
-        return "Databases are down";
-      case "WARNING":
-        return "Some databases are not online";
-      case "UNKNOWN":
-        return "Couldn't fetch databases status";
-      default:
-        return "Unknown";
-    }
-  } else if (about === "memory") {
-    switch (status) {
-      case "UP":
-        return "Memory usage is normal.";
-      case "DOWN":
-        return "Memory usage is critically high.";
-      case "WARNING":
-        return "Memory usage is high.";
-      case "UNKNOWN":
-        return "Couldn't fetch memory status";
-      default:
-        return "Memory status is unknown.";
-    }
-  } else if (about === "disk") {
-    switch (status) {
-      case "UP":
-        return "Disk usage is normal.";
-      case "DOWN":
-        return "Disk usage is critically high or disk not responding!";
-      case "WARNING":
-        return "Disk usage is high.";
-      case "UNKNOWN":
-        return "Couldn't fetch disk status";
-      default:
-        return "Disk status is unknown.";
-    }
-  }
-}
-
-interface IIndividualStatusIndicatorProps {
-  serverData: ServerData;
-  nodename: string;
-}
-
-function DiskAndMemoryIndicator({ serverData, nodename }: IIndividualStatusIndicatorProps) {
-  const memoryPressureStatus = getMemoryPressureStatus(serverData.memoryPressure, nodename).status;
-  const diskUsageStatus = getDiskUsageStatus(serverData.diskUsages, nodename).status;
-
-  const memoryIndicatorColor = getIndicatorColorFromStatus(memoryPressureStatus);
-  const diskIndicatorColor = getIndicatorColorFromStatus(diskUsageStatus);
-
-  return (
-    <div className='flex gap-4 text-lg mr-2'>
-      <FaHardDrive className={diskIndicatorColor} />
-      <FaMemory className={memoryIndicatorColor} />
-    </div>
-  );
-}
-
-function DatabaseStatusIndicator({ serverData, nodename }: IIndividualStatusIndicatorProps) {
-  const databaseStatus = getDatabaseStatus(serverData.showDatabaseInfo, serverData.databaseStatus).status;
-
-  const databaseIndicatorColor = getIndicatorColorFromStatus(databaseStatus);
-
-  return (
-    <div className='text-lg mr-2'>
-      <FaDatabase className={databaseIndicatorColor} />
-    </div>
-  );
-}
-
-function ServicesStatusIndicator({ serverData, nodename }: IIndividualStatusIndicatorProps) {
-  const servicesStatus = getServicesStatus(serverData.services, nodename, serverData.alias).status;
-
-  const servicesIndicatorColor = getIndicatorColorFromStatus(servicesStatus);
-
-  return (
-    <div className='text-lg mr-2'>
-      <IoCellular className={servicesIndicatorColor} />
-    </div>
-  );
-}
-
 
 interface IServicesDetailsProps {
   serverData: ServerData;
