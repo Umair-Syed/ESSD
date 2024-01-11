@@ -130,7 +130,7 @@ export const updateServer: RequestHandler<unknown, unknown, IUpdateServerMetaBod
         await ServersMetaModel.findOneAndUpdate(
             { hostname: hostname },
             {
-                selectedFilters: selectedFilters,
+                $set: { selectedFilters: selectedFilters }
             }
         );
 
@@ -148,7 +148,7 @@ async function updateServerData(hostname: string, selectedFilters: string[],) {
     const updatedDocument = await ServerDataModel.findOneAndUpdate(
         { hostname: hostname },
         {
-            selectedFilters: selectedFilters,
+            $set: { selectedFilters: selectedFilters }
         },
         { upsert: true, new: true }
     );

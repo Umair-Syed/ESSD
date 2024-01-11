@@ -195,11 +195,34 @@ function CardBack({ data }: CardProps) {
         </div>
       );
     } else {
-      return (
-        <div className='text-lg font-semibold text-red-600'>
-          Server down
-        </div>
-      );
+      
+      let downProcesses = [];
+      if (data.supervisorctlStatus.length > 0 && data.supervisorctlStatus[0].processesStatus.length > 0) {
+        // If supervisorctlStatus is available, we use it to get the down processes.
+        for (let process of data.supervisorctlStatus[0].processesStatus) {
+          if (process.status !== "RUNNING") {
+            downProcesses.push(process.name);
+          }
+        }
+
+        return (
+          <div className='max-w-xs text-base font-semibold text-red-600 overflow-hidden'>
+            <div style={{
+              display: 'inline-block',
+              whiteSpace: 'nowrap',
+              animation: 'marquee 10s linear infinite'
+            }}>
+              {'Processes down: ' + downProcesses.join(', ')}
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div className='text-lg font-semibold text-red-600'>
+            Server down
+          </div>
+        );
+      }
     }
   };
 

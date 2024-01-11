@@ -499,31 +499,60 @@ function ServicesDetails({ serverData, nodename }: IServicesDetailsProps) {
     }
   }
 
+  const isSupervisorctlStatusEmpty = serverData.supervisorctlStatus.length === 0;
+
+  const nodeSupervisorStatusData = serverData.supervisorctlStatus.find(node => node.nodeName === nodename);
+  const isProcessesStatusEmpty = !nodeSupervisorStatusData || nodeSupervisorStatusData.processesStatus.length === 0;
+
+  const couldntFetchSupervisor = isSupervisorctlStatusEmpty || isProcessesStatusEmpty;
+
   return (
     <div className='border-2 rounded-md pb-2 mt-8 mb-8'>
       <div className='flex justify-between bg-gray-200 px-2 py-2'>
-        <h1 className='text-gray-600'>Services Status</h1>
+        <h1 className='text-gray-600'>Services and supervisorctl Status</h1>
         <div>
           <ServicesStatusIndicator serverData={serverData} nodename={serverData.hostname} />
         </div>
       </div>
       <div className='mt-4'>
-        {couldntFetchServices ?
-          <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
-            <div>Couldn't fetch services status. Looks like server is down  </div>
-            <div className='text-xl'><MdError className='text-red-400' /></div>
-          </div>
-          :
-          servicesStatusArray.map((service, index) => (
-            <div
-              key={service.name}
-              className={`flex justify-between items-center px-4 py-2 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-              <div className='text-lg text-gray-700'>{service.name}</div>
-              <div className='text-xl'>
-                {service.status === "UP" ? <IoCellular className='text-green-400' /> : <IoCellular className='text-red-400' />}
-              </div>
+        <div>
+          <div className='text-gray-500 font-bold mx-4 mb-2 mt-4'>Services Status: </div>
+          {couldntFetchServices ?
+            <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
+              <div>Couldn't fetch services status. Looks like services are down  </div>
+              <div className='text-xl'><MdError className='text-red-400' /></div>
             </div>
-          ))}
+            :
+            servicesStatusArray.map((service, index) => (
+              <div
+                key={service.name}
+                className={`flex justify-between items-center px-4 py-2 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                <div className='text-lg text-gray-700'>{service.name}</div>
+                <div className='text-xl'>
+                  {service.status === "UP" ? <IoCellular className='text-green-400' /> : <IoCellular className='text-red-400' />}
+                </div>
+              </div>
+            ))}
+        </div>
+        <div>
+          <div className='text-gray-500 font-bold mx-4 mb-2 mt-10'>Processes Status: </div>
+          {couldntFetchSupervisor ?
+          <div className='flex justify-center text-gray-500 py-8 items-center gap-2'>
+              <div>Couldn't connect to the server</div>
+              <div className='text-xl'><MdError className='text-red-400' /></div>
+            </div>
+            :
+            nodeSupervisorStatusData.processesStatus.map((process, index) => (
+              <div
+                key={process.name}
+                className={`flex justify-between items-center px-4 py-2 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                <div className='text-lg text-gray-700'>{process.name}</div>
+                <div className={`text-base font-bold ${process.status === "RUNNING" ? "text-green-400" : "text-red-400"}`}>
+                  {process.status}
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );

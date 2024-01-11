@@ -26,7 +26,7 @@ export default async function updateDatabaseDataTask(serverMeta: ICreateServerMe
         await ServerDataModel.findOneAndUpdate(
             { hostname: serverMeta.hostname },
             {
-                databaseStatus: databaseData
+                $set: { databaseStatus: databaseData }
             },
             { upsert: true, new: true }
         );

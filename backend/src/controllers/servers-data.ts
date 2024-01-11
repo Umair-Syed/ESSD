@@ -5,6 +5,7 @@ import updateDatabaseDataTask from '../services/tasks/databaseTask';
 import updateDiskUsageDataTask from '../services/tasks/diskUsageTask';
 import updateMemoryUsageDataTask from '../services/tasks/memoryUsageTask';
 import updateServerInfoDataTask from '../services/tasks/serverInfoDataTask';
+import updateSupervisorctlStatusTask from '../services/tasks/supervisorctlStatusTask';
 import { ServersMetaModel, IServerMeta } from '../models/server-meta';
 
 
@@ -26,6 +27,7 @@ export const getRefreshedServersDataForHostName: RequestHandler = async (req, re
         // 1. refresh data for this hostname in db
         const server = await ServersMetaModel.findOne({ hostname: hostname });
         await updateServicesDataTask(server as IServerMeta); // need to use await, otherwise will simultaneously update same document
+        await updateSupervisorctlStatusTask(server as IServerMeta);
         await updateDatabaseDataTask(server as IServerMeta);
         await updateDiskUsageDataTask(server as IServerMeta);
         await updateMemoryUsageDataTask(server as IServerMeta);

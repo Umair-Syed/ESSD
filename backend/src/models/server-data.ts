@@ -9,6 +9,14 @@ const serviceStatusSchema = new Schema({
     },{ _id: false }]
 },{ _id: false });
 
+const processesStatusSchema = new Schema({
+    nodeName: String,
+    processesStatus: [{
+        name: String, // Name of the process
+        status: String,
+    },{ _id: false}]
+},{ _id: false });
+
 // past20MinUsage: keeps the last 20 minutes of disk usage data, with 2 minute interval, so there will be 10 elements always
 const diskUsageForNode = new Schema({
     nodeName: String,
@@ -39,6 +47,7 @@ const serversDataSchema = new Schema({
     hostname: { type: String, required: true },
     alias: { type: String, default: "" },
     services: [serviceStatusSchema],
+    supervisorctlStatus: [processesStatusSchema], // will have only one element for non-cluster servers
     diskUsages: [diskUsageForNode], // will have only one element for non-cluster servers
     memoryPressure: [memoryPressureForNode], // will have only one element for non-cluster servers
     databaseStatus: [databaseStatus],

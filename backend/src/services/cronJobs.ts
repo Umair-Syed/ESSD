@@ -6,6 +6,7 @@ import updateDatabaseDataTask from './tasks/databaseTask';
 import updateDiskUsageDataTask from './tasks/diskUsageTask';
 import updateMemoryUsageDataTask from './tasks/memoryUsageTask';
 import updateServerInfoDataTask from './tasks/serverInfoDataTask';
+import updateSupervisorctlStatusTask from './tasks/supervisorctlStatusTask';
 
 const timeInterval = 5; // need to set in database and user will set it from footer
 const smallerTimeInterval = timeInterval < 2 ? timeInterval : 2;
@@ -19,6 +20,7 @@ export default function startCronJobs() {
         const servers = await ServersMetaModel.find();
         for (const server of servers) {
           await updateServicesDataTask(server);
+          await updateSupervisorctlStatusTask(server);
           await updateDatabaseDataTask(server as ICreateServerMetaBody);
           await updateServerInfoDataTask(server);
         }

@@ -1,4 +1,4 @@
-import ServerDataModel  from "../../models/server-data";
+import ServerDataModel from "../../models/server-data";
 import { executeCommandOnSSH } from '../../util';
 
 interface ICreateServerMetaBody {
@@ -21,8 +21,8 @@ export default async function updateServerInfoDataTask(serverMeta: ICreateServer
         }
         await ServerDataModel.findOneAndUpdate(
             { hostname: serverMeta.hostname },
-            { 
-                serverVersion: serverVersion,
+            {
+                $set: { serverVersion: serverVersion }
             },
             { upsert: true, new: true }
         );

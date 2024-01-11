@@ -6,6 +6,14 @@ export interface IServiceStatus {
     }>;
 }
 
+interface IProcessesStatusForNode {
+    nodeName: string;
+    processesStatus: Array<{
+        name: string; // Name of the process
+        status: string;
+    }>;
+}
+
 export interface IDiskUsageForNode {
     nodeName: string;
     past20MinUsage: number[];
@@ -36,6 +44,7 @@ export interface ServerData {
     hostname: string;
     alias: string;
     services: IServiceStatus[];
+    supervisorctlStatus: IProcessesStatusForNode[]; // Will have only one element for non-cluster servers
     diskUsages: IDiskUsageForNode[]; // Will have only one element for non-cluster servers
     memoryPressure: IMemoryPressureForNode[]; // Will have only one element for non-cluster servers
     databaseStatus: IDatabaseStatus[];

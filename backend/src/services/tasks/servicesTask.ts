@@ -1,4 +1,4 @@
-import ServerDataModel  from "../../models/server-data";
+import ServerDataModel from "../../models/server-data";
 import axios from 'axios';
 
 interface ICreateServerMetaBody {
@@ -16,8 +16,8 @@ export default async function updateServicesDataTask(serverMeta: ICreateServerMe
 
         await ServerDataModel.findOneAndUpdate(
             { hostname: serverMeta.hostname },
-            { 
-                services: servicesData.services,
+            {
+                $set: { services: servicesData.services }
             },
             { upsert: true, new: true }
         );
@@ -44,7 +44,7 @@ async function getServicesData(serverMeta: ICreateServerMetaBody): Promise<Servi
     const url = `https://${serverMeta.hostname}:2443/configuration-service-admin/cluster/nodes?namespace=/serviceRegistry&_=1700746112434`;
     const username = serverMeta.userName2443;
     const password = serverMeta.password2443;
-    
+
     const base64Credentials = Buffer.from(username + ':' + password).toString('base64');
 
     const headers = {
@@ -54,13 +54,13 @@ async function getServicesData(serverMeta: ICreateServerMetaBody): Promise<Servi
     try {
         const response = await axios.get(url, { headers: headers, timeout: 3000 });
         console.log(`Data: ${JSON.stringify(response.data, null, 2).substring(0, 1000)}`);
-        if(response && response.data) {
+        if (response && response.data) {
             return parseServiceData(response.data);
         }
-        return {services:[]};
+        return { services: [] };
     } catch (e) {
         console.error('Error 2443:', e);
-        return {services:[]};
+        return { services: [] };
     }
 }
 
@@ -94,16 +94,16 @@ function parseServiceData(responseData: ServerResponseData): ServicesData {
             for (const nodeId in serviceNodes) {
                 try {
                     const nodeData = JSON.parse(serviceNodes[nodeId]);
-                    let status: ('up' | 'down')  = 'down';
+                    let status: ('up' | 'down') = 'down';
                     let nodeName = serviceName;
-            
+
                     if (nodeData.payload) {
                         nodeName = nodeData.payload.hostname;
                         status = "up";
                     }
-        
+
                     const nodeExists = nodes.some(node => node.nodeName === nodeName);
-            
+
                     if (!nodeExists) {
                         nodes.push({
                             nodeName: nodeName,
