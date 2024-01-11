@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getServersDataForFilter, getAllServersData } from '@/network/api/serversDataApis';
 import { ServerData } from '@/models/server-data';
 import { useSelectedFilter } from '@/contexts/SelectedFilterContext';
@@ -18,6 +18,8 @@ export default function PresentPage() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [filteredServers, setFilteredServers] = useState(serversData);
   const [flipped, setFlipped] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isPageShown, setIsPageShown] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,13 +51,36 @@ export default function PresentPage() {
   }, [serversData]);
 
 
+  // 7 seconds wait for back side, and 3 seconds wait for front side 
   useEffect(() => {
-    const flipInterval = setInterval(() => {
-      setFlipped((prev) => !prev);
-    }, 5000);
+    let flipTimeout: NodeJS.Timeout;
+    let nextFlipInMs = 7000;
+    const flip = () => {
+      
+      setFlipped((prev) => {
 
-    return () => clearInterval(flipInterval);
+        nextFlipInMs = prev ? 7000 : 3000;
+        return !prev;
+      });
+      flipTimeout = setTimeout(flip, nextFlipInMs);
+    };
+    flipTimeout = setTimeout(flip, 3000);
+
+    return () => clearTimeout(flipTimeout);
   }, []);
+
+
+  // to move to next page
+  useEffect(() => {
+    if (!flipped && isPageShown) { // flipped == back side
+      const nextButton = carouselRef.current?.querySelector('span[type="next"]') as HTMLElement;
+      nextButton?.click();
+
+      setIsPageShown(false);
+    } else if (!isPageShown) {
+      setIsPageShown(true);
+    } 
+  }, [flipped]);
 
 
   const flipAnimation = useSpring({
@@ -69,11 +94,12 @@ export default function PresentPage() {
     },
     reset: false,
   });
+  
 
   return (
-    <div className='mt-8'>
+    <div className='mt-8' ref={carouselRef}>
       {filteredServers.length > 0 ? (
-        <Carousel cols={3} rows={2} gap={5} loop autoplay={10000} showDots={true} hideArrow={true}>
+        <Carousel cols={3} rows={2} gap={5} loop showDots={true} hideArrow={false}>
           {filteredServers.map((server, index) => (
             <Carousel.Item key={index}>
               <animated.div style={flipAnimation}>
@@ -195,13 +221,13 @@ function CardBack({ data }: CardProps) {
         </div>
       );
     } else {
-      
-      let downProcesses = [];
+
+      let downProcessesMarqueeString = [];
       if (data.supervisorctlStatus.length > 0 && data.supervisorctlStatus[0].processesStatus.length > 0) {
         // If supervisorctlStatus is available, we use it to get the down processes.
         for (let process of data.supervisorctlStatus[0].processesStatus) {
           if (process.status !== "RUNNING") {
-            downProcesses.push(process.name);
+            downProcessesMarqueeString.push(process.name);
           }
         }
 
@@ -212,7 +238,7 @@ function CardBack({ data }: CardProps) {
               whiteSpace: 'nowrap',
               animation: 'marquee 10s linear infinite'
             }}>
-              {'Processes down: ' + downProcesses.join(', ')}
+              {'Processes down: ' + downProcessesMarqueeString}
             </div>
           </div>
         );

@@ -509,7 +509,7 @@ function ServicesDetails({ serverData, nodename }: IServicesDetailsProps) {
   return (
     <div className='border-2 rounded-md pb-2 mt-8 mb-8'>
       <div className='flex justify-between bg-gray-200 px-2 py-2'>
-        <h1 className='text-gray-600'>Services and supervisorctl Status</h1>
+        <h1 className='text-gray-600'>Services and supervisorctl status</h1>
         <div>
           <ServicesStatusIndicator serverData={serverData} nodename={serverData.hostname} />
         </div>

@@ -18,6 +18,8 @@ export default function startCronJobs() {
       console.log('Running the main update task every 5 minutes');
       try {
         const servers = await ServersMetaModel.find();
+
+        /* Note: if you are going to update/add new tasks, update in getRefreshedServersDataForHostName method also in server-data controller  */
         for (const server of servers) {
           await updateServicesDataTask(server);
           await updateSupervisorctlStatusTask(server);
