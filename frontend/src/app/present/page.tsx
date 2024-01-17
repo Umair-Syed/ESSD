@@ -121,11 +121,20 @@ interface CardProps {
 }
 
 function CardFront({ data }: CardProps) {
+  const cardColor = getCardColor(data, false);
+  const translucentCardColor = getCardColor(data, true);
+
+  const match = cardColor.match(/\d+/g); // extract the RGB values from the card color
+  const rgbValues = match ? match.slice(0, 3).join(", ") : "0, 0, 0"; // Fallback to black if no match
+
+  const shadowColor = `rgba(${rgbValues}, 0.5)`; 
+
   return (
-    <div className={` mx-4 my-4 px-6 py-6 border-4 rounded-xl flex-col items-center justify-center`}
+    <div className={`mx-4 my-4 px-6 py-6 border-4 rounded-xl flex-col items-center justify-center`}
       style={{
-        backgroundColor: getCardColor(data, true),
-        borderColor: getCardColor(data),
+        backgroundColor: translucentCardColor,
+        borderColor: cardColor,
+        boxShadow: `0px 4px 8px ${shadowColor}`
       }}
     >
       <div className='flex justify-between items-center'>
@@ -329,10 +338,21 @@ function CardBack({ data }: CardProps) {
   }
 
 
+  const cardColor = getCardColor(data, false);
+
+  const match = cardColor.match(/\d+/g); // extract the RGB values from the card color
+  const rgbValues = match ? match.slice(0, 3).join(", ") : "0, 0, 0"; // Fallback to black if no match
+
+  const shadowColor = `rgba(${rgbValues}, 0.5)`; 
+
 
   return (
     <div className={`mx-4 my-4 px-6 py-6 border-4 rounded-xl flex-col items-center justify-center bg-gray-300`}
-      style={{ transform: "rotateX(180deg)", borderColor: getCardColor(data) }}
+      style={{
+        transform: "rotateX(180deg)", 
+        borderColor: cardColor,
+        boxShadow: `0px 4px 8px ${shadowColor}` 
+      }}
     >
       <div className='flex justify-between items-center'>
         <div className='text-xl font-bold text-gray-700'>{data.hostname}</div>
@@ -382,17 +402,17 @@ function CardBack({ data }: CardProps) {
   );
 }
 
-function getCardColor(data: ServerData, translucent = false) {
-  const servicesStatus = getServicesStatus(data.services, data.hostname, data.alias).status;
-  const databaseStatus = getDatabaseStatus(data.showDatabaseInfo, data.databaseStatus).status;
-  const diskUsageStatus = getDiskUsageStatus(data.diskUsages, data.hostname).status;
-  const memoryPressureStatus = getMemoryPressureStatus(data.memoryPressure, data.hostname).status;
+  function getCardColor(data: ServerData, translucent = false) {
+    const servicesStatus = getServicesStatus(data.services, data.hostname, data.alias).status;
+    const databaseStatus = getDatabaseStatus(data.showDatabaseInfo, data.databaseStatus).status;
+    const diskUsageStatus = getDiskUsageStatus(data.diskUsages, data.hostname).status;
+    const memoryPressureStatus = getMemoryPressureStatus(data.memoryPressure, data.hostname).status;
 
-  const indicatorStatuses = [servicesStatus, databaseStatus, diskUsageStatus, memoryPressureStatus];
+    const indicatorStatuses = [servicesStatus, databaseStatus, diskUsageStatus, memoryPressureStatus];
 
-  if (indicatorStatuses.includes("DOWN")) {
-    return translucent ? "rgb(220, 38, 38, 0.2)" : "rgb(220, 38, 38)"; //red-500
-  } else {
-    return translucent ? "rgb(22, 163, 74, 0.2)" : "rgb(22, 163, 74)"; // green-500
+    if (indicatorStatuses.includes("DOWN")) {
+      return translucent ? "rgb(220, 38, 38, 0.2)" : "rgb(220, 38, 38)"; //red-500
+    } else {
+      return translucent ? "rgb(22, 163, 74, 0.2)" : "rgb(22, 163, 74)"; // green-500
+    }
   }
-}
