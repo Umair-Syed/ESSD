@@ -242,13 +242,14 @@ function CardBack({ data }: CardProps) {
 
         return (
           <div className='max-w-xs text-base font-semibold text-red-600 overflow-hidden'>
-            <div style={{
+            
+            {downProcessesMarqueeString.length > 0 ? <div style={{
               display: 'inline-block',
               whiteSpace: 'nowrap',
               animation: 'marquee 10s linear infinite'
             }}>
-              {downProcessesMarqueeString.length > 0 ? ('Processes down: ' + downProcessesMarqueeString) : 'Services down'}
-            </div>
+              {'Processes down: ' + downProcessesMarqueeString}
+            </div> : 'Services down'}
           </div>
         );
       } else {
