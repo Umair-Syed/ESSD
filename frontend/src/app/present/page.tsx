@@ -230,7 +230,7 @@ function CardBack({ data }: CardProps) {
         </div>
       );
     } else {
-
+      // All services are down, can atleast show which processes are down.
       let downProcessesMarqueeString = [];
       if (data.supervisorctlStatus.length > 0 && data.supervisorctlStatus[0].processesStatus.length > 0) {
         // If supervisorctlStatus is available, we use it to get the down processes.
@@ -247,7 +247,7 @@ function CardBack({ data }: CardProps) {
               whiteSpace: 'nowrap',
               animation: 'marquee 10s linear infinite'
             }}>
-              {'Processes down: ' + downProcessesMarqueeString}
+              {downProcessesMarqueeString.length > 0 ? ('Processes down: ' + downProcessesMarqueeString) : 'Services down'}
             </div>
           </div>
         );

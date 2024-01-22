@@ -18,7 +18,7 @@ app.use(cors({
     origin: env.WEBSITE_URL,
 }));
 
-// startCronJobs();
+startCronJobs();
 
 // Routes
 app.use("/servers-meta", serverMetaRoutes);
