@@ -5,6 +5,7 @@ import NavBar from '../components/NavBar'
 import dynamic from 'next/dynamic';
 import { SearchQueryProvider } from '../contexts/SearchQueryContext';
 import { ServersDataProvider } from '../contexts/ServersDataContext';
+import Script from 'next/script';
 
 const SelectedFilterProvider = dynamic(() => import('../contexts/SelectedFilterContext').then(mod => mod.SelectedFilterProvider), {
   ssr: false,
@@ -20,6 +21,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-100 overflow-scroll`} suppressHydrationWarning={true}>
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-1GF50S0J90"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-1GF50S0J90');
+          `}
+        </Script>
         <ServersDataProvider>
           <SelectedFilterProvider>
             <SearchQueryProvider>
