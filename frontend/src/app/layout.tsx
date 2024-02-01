@@ -20,6 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <title>Edge Servers Dashboard</title>
+      </head>
       <body className={`${inter.className} bg-gray-100 overflow-scroll`} suppressHydrationWarning={true}>
         <Script
           strategy="afterInteractive"

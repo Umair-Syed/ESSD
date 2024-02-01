@@ -30,25 +30,7 @@ app.use("/misc", miscRoutes); // miscelleneous routes - eg. Filters
 // Testing
 // import axios from 'axios';
 app.get("/", (req, res) => {
-    
-    const data = {
-        "names": [
-          "Emma",
-          "Liam",
-          "Olivia",
-          "Noah",
-          "Ava",
-          "Ethan",
-          "Isabella",
-          "Mason",
-          "Sophia",
-          "Mia"
-        ]
-      }
-      
-    res.send(data);
-
-    // res.send("Hello World!");
+  res.send("Edge servers API");
 })
 
 export default app;
