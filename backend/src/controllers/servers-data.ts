@@ -11,7 +11,7 @@ import { ServersMetaModel, IServerMeta } from '../models/server-meta';
 
 export const getAllServersData: RequestHandler = async (req, res) => {
     try {
-        const serversData = await ServerDataModel.find().exec();
+        const serversData = await ServerDataModel.find().sort({createdAt : -1}).exec();
         res.status(200).json(serversData);
     } catch (error) {
         console.log(error);
@@ -55,7 +55,7 @@ export const getServersDataForFilter: RequestHandler = async (req, res) => {
     try {
         const filteredServersData = await ServerDataModel.find({
             selectedFilters: { $all: filters }
-        });
+        }).sort({createdAt : -1});
 
         res.status(200).json(filteredServersData);
     } catch (error) {
