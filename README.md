@@ -1,5 +1,5 @@
 # servers_dashboard_project
-Vocera servers dashboard
+ Servers Status Dashboard
 
 *Demo Video Link*: https://drive.google.com/file/d/1szhJZVmcy1MDsMaxvJUt2pkmgVmukSaw/view
 
